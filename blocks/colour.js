@@ -42,6 +42,217 @@ goog.require('Blockly.FieldLabel');
 Blockly.Constants.Colour.HUE = 20;
 
 Blockly.defineBlocksWithJsonArray([  // BEGIN JSON EXTRACT
+  // App Inventor Blocks
+  // ================================================================================================
+  {
+    "type": "colour_black",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#000000"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_white",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#ffffff"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_red",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#ff0000"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_pink",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#ffafaf"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_orange",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#ffc800"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_yellow",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#ffff00"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_green",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#00ff00"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_cyan",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#00ffff"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_blue",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#0000ff"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_magenta",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#ff00ff"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_light_gray",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#cccccc"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_gray",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#888888"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  {
+    "type": "colour_dark_gray",
+    "message0": "%1",
+    "args0": [
+      {
+        "type": "field_colour",
+        "name": "COLOUR",
+        "colour": "#444444"
+      }
+    ],
+    "output": "Colour",
+    "helpUrl": "%{BKY_COLOUR_PICKER_HELPURL}",
+    "style": "colour_blocks",
+    "tooltip": "%{BKY_COLOUR_PICKER_TOOLTIP}",
+    "extensions": ["parent_tooltip_when_inline"]
+  },
+  // ================================================================================================
   // Block for colour picker.
   {
     "type": "colour_picker",
@@ -131,3 +342,34 @@ Blockly.defineBlocksWithJsonArray([  // BEGIN JSON EXTRACT
     "tooltip": "%{BKY_COLOUR_BLEND_TOOLTIP}"
   }
 ]);  // END JSON EXTRACT (Do not delete this comment.)
+
+// App Inventor Blocks (Deprecated)
+// ================================================================================================
+Blockly.Blocks['color_make_color'] = {
+  category: "Colors",
+  helpUrl: "%{BKY_LANG_COLOUR_MAKE_COLOUR_HELPURL}",
+  init: function() {
+    this.setColour("#7D7D7D");
+    this.appendValueInput('COLORLIST')
+      .appendField("%{BKY_LANG_COLOUR_MAKE_COLOUR}")
+      .setCheck(Blockly.Blocks.Utilities.YailTypeToBlocklyType("list", Blockly.Blocks.Utilities.INPUT));
+    this.setOutput(true, Blockly.Blocks.Utilities.YailTypeToBlocklyType("number", Blockly.Blocks.Utilities.OUTPUT));
+    this.setTooltip("%{BKY_LANG_COLOUR_MAKE_COLOUR_TOOLTIP}");
+  },
+  typeblock: [{ translatedName: "%{BKY_LANG_COLOUR_MAKE_COLOUR}" }]
+};
+
+Blockly.Blocks['color_split_color'] = {
+  category: "Colors",
+  helpUrl: "%{BKY_LANG_COLOUR_SPLIT_COLOUR_HELPURL}",
+  init: function() {
+    this.setColour("#7D7D7D");
+    this.appendValueInput('COLOR')
+      .appendField("%{BKY_LANG_COLOUR_SPLIT_COLOUR}")
+      .setCheck(Blockly.Blocks.Utilities.YailTypeToBlocklyType("number",Blockly.Blocks.Utilities.INPUT));
+    this.setOutput(true, Blockly.Blocks.Utilities.YailTypeToBlocklyType("list",Blockly.Blocks.Utilities.OUTPUT));
+    this.setTooltip("%{BKY_LANG_COLOUR_SPLIT_COLOUR_TOOLTIP}");
+  },
+  typeblock: [{ translatedName: "%{BKY_LANG_COLOUR_SPLIT_COLOUR}" }]
+};
+// ================================================================================================
