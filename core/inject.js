@@ -228,6 +228,11 @@ Blockly.createMainWorkspace_ = function(svg, options, blockDragSurface,
   if (options.zoomOptions && options.zoomOptions.controls) {
     mainWorkspace.addZoomControls();
   }
+  if (!options.readOnly) {
+    var flydown = mainWorkspace.addFlydown_('g');
+    Blockly.utils.dom.insertAfter(flydown, mainWorkspace.svgBubbleCanvas_);
+  }
+
   // Register the workspace svg as a UI component.
   mainWorkspace.getThemeManager().subscribe(svg, 'workspace', 'background-color');
 
@@ -420,6 +425,10 @@ Blockly.init_ = function(mainWorkspace) {
       mainWorkspace.flyout_.scrollToStart();
     }
   }
+
+  mainWorkspace.flydown_.init(mainWorkspace);
+  mainWorkspace.flydown_.autoClose = true; // Flydown closes after selecting a block
+  mainWorkspace.flydown_.scrollbar_ && mainWorkspace.flydown_.scrollbar_.setContainerVisible(false);
 
   var verticalSpacing = Blockly.Scrollbar.scrollbarThickness;
   if (options.hasTrashcan) {

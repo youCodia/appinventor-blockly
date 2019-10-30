@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <title>Blockly Demo: Toolbox</title>
-  <script src="../../blockly_compressed.js"></script>
+  <script src="../../blockly_uncompressed.js"></script>
   <script src="../../blocks_compressed.js"></script>
   <script src="../../msg/js/en.js"></script>
   <style>
@@ -48,15 +48,8 @@
       </category>
     </category>
     <category name="Loops" colour="%{BKY_LOOPS_HUE}">
-      <block type="controls_repeat_ext">
-        <value name="TIMES">
-          <block type="math_number">
-            <field name="NUM">10</field>
-          </block>
-        </value>
-      </block>
-      <block type="controls_whileUntil"></block>
-      <block type="controls_for">
+      <block type="controls_while"></block>
+      <block type="controls_forRange">
         <field name="VAR">i</field>
         <value name="FROM">
           <block type="math_number">
@@ -75,7 +68,6 @@
         </value>
       </block>
       <block type="controls_forEach"></block>
-      <block type="controls_flow_statements"></block>
     </category>
     <category name="Math" colour="%{BKY_MATH_HUE}">
       <block type="math_number">

@@ -107,7 +107,7 @@ Blockly.blockRendering.init = function(name) {
   var rendererCtor = function() {
     rendererCtor.superClass_.constructor.call(this);
   };
-  Blockly.utils.object.inherits(rendererCtor,
+ Blockly.utils.object.inherits(rendererCtor,
       Blockly.blockRendering.rendererMap_[name]);
   var renderer = new rendererCtor();
   renderer.init();

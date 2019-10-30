@@ -295,6 +295,13 @@ Blockly.WorkspaceSvg.prototype.scrollbar = null;
 Blockly.WorkspaceSvg.prototype.flyout_ = null;
 
 /**
+ * Shared flydown for parameters and variables.
+ * @type {Blockly.Flydown}
+ * @private
+ */
+Blockly.WorkspaceSvg.prototype.flydown_ = null;
+
+/**
  * Category-based toolbox providing blocks which may be dragged into this
  * workspace.
  * @type {Blockly.Toolbox}
@@ -691,6 +698,10 @@ Blockly.WorkspaceSvg.prototype.dispose = function() {
   if (this.flyout_) {
     this.flyout_.dispose();
     this.flyout_ = null;
+  }
+  if (this.flydown_) {
+    this.flydown_.dispose();
+    this.flydown_ = null;
   }
   if (this.trashcan) {
     this.trashcan.dispose();
@@ -2532,4 +2543,20 @@ Blockly.WorkspaceSvg.prototype.refreshTheme = function() {
   if (this.toolbox_) {
     this.toolbox_.updateColourFromTheme();
   }
+};
+
+// App Inventor
+// ===========================================================================
+Blockly.WorkspaceSvg.prototype.addFlydown_ = function(tagName) {
+  this.flydown_ = new Blockly.Flydown(new Blockly.Options({scrollbars: false}));
+  return this.flydown_.createDom(tagName)
+};
+
+/**
+ * Get Flydown
+ * @returns {*}
+ * @package
+ */
+Blockly.WorkspaceSvg.prototype.getFlydown = function() {
+  return this.flydown_;
 };
