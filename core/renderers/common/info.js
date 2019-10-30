@@ -355,8 +355,11 @@ Blockly.blockRendering.RenderInfo.prototype.addInput_ = function(input, activeRo
   } else if (input.type == Blockly.DUMMY_INPUT) {
     // Dummy inputs have no visual representation, but the information is still
     // important.
+    activeRow.minHeight = Math.max(activeRow.minHeight,
+        this.constants_.DUMMY_INPUT_MIN_HEIGHT);
     activeRow.hasDummyInput = true;
   }
+  activeRow.align = input.align;
 };
 
 /**
@@ -545,7 +548,7 @@ Blockly.blockRendering.RenderInfo.prototype.addAlignmentPadding_ = function(row,
 Blockly.blockRendering.RenderInfo.prototype.alignStatementRow_ = function(row) {
   var statementInput = row.getLastInput();
   var currentWidth = row.width - statementInput.width;
-  var desiredWidth = this.statementEdge - this.startX;
+  var desiredWidth = this.statementEdge;
   // Add padding before the statement input.
   var missingSpace = desiredWidth - currentWidth;
   if (missingSpace) {
