@@ -136,6 +136,7 @@ gulp.task('build-blocks', function () {
   const provides = `
 goog.provide('Blockly');
 goog.provide('Blockly.Blocks');
+goog.provide('Blockly.Blocks.Utilities');
 goog.provide('Blockly.Comment');
 goog.provide('Blockly.FieldCheckbox');
 goog.provide('Blockly.FieldColour');
@@ -194,40 +195,8 @@ goog.provide('Blockly.utils.string');`;
  * This task builds the javascript generator.
  *     javascript_compressed.js
  */
-gulp.task('build-javascript', function() {
-  return buildGenerator('javascript', 'JavaScript');
-});
-
-/**
- * This task builds the python generator.
- *     python_compressed.js
- */
-gulp.task('build-python', function() {
-  return buildGenerator('python', 'Python');
-});
-
-/**
- * This task builds the php generator.
- *     php_compressed.js
- */
-gulp.task('build-php', function() {
-  return buildGenerator('php', 'PHP');
-});
-
-/**
- * This task builds the lua generator.
- *     lua_compressed.js
- */
-gulp.task('build-lua', function() {
-  return buildGenerator('lua', 'Lua');
-});
-
-/**
- * This task builds the dart generator:
- *     dart_compressed.js
- */
-gulp.task('build-dart', function() {
-  return buildGenerator('dart', 'Dart');
+gulp.task('build-yail', function() {
+  return buildGenerator('yail', 'Yail');
 });
 
 /**
@@ -302,20 +271,12 @@ if (this.IS_NODE_JS) {
  * This task builds all of Blockly:
  *     blockly_compressed.js
  *     blocks_compressed.js
- *     javascript_compressed.js
- *     python_compressed.js
- *     php_compressed.js
- *     lua_compressed.js
- *     dart_compressed.js
+ *     yail_compressed.js
  */
 gulp.task('build', gulp.parallel(
   'build-core',
   'build-blocks',
-  'build-javascript',
-  'build-python',
-  'build-php',
-  'build-lua',
-  'build-dart'
+  'build-yail'
 ));
 
 ////////////////////////////////////////////////////////////
@@ -624,40 +585,8 @@ function packageGenerator(file, rename, generator) {
  * This task wraps javascript_compressed.js into a UMD module.
  * @example import 'blockly/javascript';
  */
-gulp.task('package-javascript', function() {
-  return packageGenerator('javascript_compressed.js', 'javascript.js', 'Blockly.JavaScript');
-});
-
-/**
- * This task wraps python_compressed.js into a UMD module.
- * @example import 'blockly/python';
- */
-gulp.task('package-python', function() {
-  return packageGenerator('python_compressed.js', 'python.js', 'Blockly.Python');
-});
-
-/**
- * This task wraps lua_compressed.js into a UMD module.
- * @example import 'blockly/lua';
- */
-gulp.task('package-lua', function() {
-  return packageGenerator('lua_compressed.js', 'lua.js', 'Blockly.Lua');
-});
-
-/**
- * This task wraps dart_compressed.js into a UMD module.
- * @example import 'blockly/dart';
- */
-gulp.task('package-dart', function() {
-  return packageGenerator('dart_compressed.js', 'dart.js', 'Blockly.Dart');
-});
-
-/**
- * This task wraps php_compressed.js into a UMD module.
- * @example import 'blockly/php';
- */
-gulp.task('package-php', function() {
-  return packageGenerator('php_compressed.js', 'php.js', 'Blockly.PHP');
+gulp.task('package-yail', function() {
+  return packageGenerator('yail_compressed.js', 'yail.js', 'Blockly.Yail');
 });
 
 /**
@@ -744,11 +673,7 @@ gulp.task('package', gulp.parallel(
   'package-blockly',
   'package-blockly-node',
   'package-blocks',
-  'package-javascript',
-  'package-python',
-  'package-lua',
-  'package-dart',
-  'package-php',
+  'package-yail',
   'package-locales',
   'package-media',
   'package-umd-bundle',
