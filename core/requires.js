@@ -59,10 +59,15 @@ goog.require('Blockly.VariablesDynamic');
 // "zoom"/"controls" configuration must be false.
 goog.require('Blockly.ZoomControls');
 
+goog.require('Blockly.ComponentDatabase');
+goog.require('Blockly.ProcedureDatabase');
+goog.require('Blockly.VariableDatabase');
+
 
 // Block dependencies.
 // None of these should be required when using advanced compilation since
 // individual block files should include the requirements they depend on.
+goog.require('Blockly.AIProcedure');
 goog.require('Blockly.Mutator');
 goog.require('Blockly.FieldAngle');
 goog.require('Blockly.FieldCheckbox');

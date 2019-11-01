@@ -676,3 +676,9 @@ Blockly.checkBlockColourConstant_ = function(
     console.warn(warning);
   }
 };
+
+// App Inventory
+// ---------------------------------------------------------------------------
+Blockly.prefixGlobalMenuName = function (name) {
+  return Blockly.Msg.LANG_VARIABLES_GLOBAL_PREFIX + Blockly.menuSeparator + name;
+};

@@ -2560,3 +2560,32 @@ Blockly.WorkspaceSvg.prototype.addFlydown_ = function(tagName) {
 Blockly.WorkspaceSvg.prototype.getFlydown = function() {
   return this.flydown_;
 };
+
+/**
+ * Obtain the {@link Blockly.ComponentDatabase} associated with the workspace.
+ *
+ * @returns {!Blockly.ComponentDatabase}
+ */
+Blockly.WorkspaceSvg.prototype.getComponentDatabase = function() {
+  return this.componentDb_;
+};
+
+/**
+ * Obtain the {@link Blockly.ProcedureDatabase} associated with the workspace.
+ * @returns {!Blockly.ProcedureDatabase}
+ */
+Blockly.WorkspaceSvg.prototype.getProcedureDatabase = function() {
+  return this.procedureDb_;
+};
+
+/**
+ * Get the topmost workspace in the workspace hierarchy.
+ * @returns {Blockly.WorkspaceSvg}
+ */
+Blockly.WorkspaceSvg.prototype.getTopWorkspace = function() {
+  var parent = this;
+  while (parent.targetWorkspace) {
+    parent = parent.targetWorkspace;
+  }
+  return parent;
+};

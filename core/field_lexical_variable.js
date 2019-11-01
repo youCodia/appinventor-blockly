@@ -206,6 +206,7 @@ Blockly.FieldLexicalVariable.prototype.getNamesInScope = function () {
 // [lyn, 11/15/13] Refactored to work on any block
 Blockly.FieldLexicalVariable.getNamesInScope = function (block) {
   var globalNames = Blockly.FieldLexicalVariable.getGlobalNames(); // from global variable declarations
+  console.log(globalNames);
   // [lyn, 11/24/12] Sort and remove duplicates from namespaces
   globalNames = Blockly.LexicalVariable.sortAndRemoveDuplicates(globalNames);
   globalNames = globalNames.map(Blockly.prefixGlobalMenuName).map(function(name) {
@@ -339,7 +340,7 @@ Blockly.FieldLexicalVariable.dropdownCreate = function() {
  * @this {!Blockly.FieldLexicalVariable}
  */
 Blockly.FieldLexicalVariable.dropdownChange = function(text) {
-  if (text) {
+  if (text && text !== this.getText()) {
     this.setValue(text);
     this.sourceBlock_.getTopWorkspace().getWarningHandler().checkErrors(this.sourceBlock_);
   }

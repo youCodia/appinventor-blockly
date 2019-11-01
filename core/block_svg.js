@@ -1810,3 +1810,15 @@ Blockly.BlockSvg.prototype.highlightForReplacement = function(add) {
         'blocklyReplaceable');
   }
 };
+
+// App Inventor
+// ------------------------------------------------------------
+/**
+ * Get the top-most workspace. Typically this is the current workspace except for flyout/flydowns.
+ * @returns {!Blockly.WorkspaceSvg}
+ */
+Blockly.BlockSvg.prototype.getTopWorkspace = function() {
+  var workspace = this.workspace;
+  while (workspace.targetWorkspace) workspace = workspace.targetWorkspace;
+  return workspace;
+};

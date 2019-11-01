@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <title>Blockly Demo: Toolbox</title>
   <script src="../../blockly_uncompressed.js"></script>
-  <script src="../../blocks_compressed.js"></script>
   <script src="../../msg/js/en.js"></script>
+  <script src="../../blocks_compressed.js"></script>
   <style>
     body {
       background-color: #fff;
@@ -28,306 +28,152 @@
   <div id="blocklyDiv" style="height: 600px; width: 800px;"></div>
 
   <xml xmlns="https://developers.google.com/blockly/xml" id="toolbox" style="display: none">
-    <category name="Logic" colour="%{BKY_LOGIC_HUE}">
+    <category name="Colors" colour="%{BKY_LOGIC_HUE}">
+      <block type="color_black"></block>
+      <block type="color_white"></block>
+      <block type="color_red"></block>
+      <block type="color_pink"></block>
+      <block type="color_orange"></block>
+      <block type="color_yellow"></block>
+      <block type="color_green"></block>
+      <block type="color_cyan"></block>
+      <block type="color_blue"></block>
+      <block type="color_magenta"></block>
+      <block type="color_light_gray"></block>
+      <block type="color_gray"></block>
+      <block type="color_dark_gray"></block>
+      <block type="color_make_color"></block>
+      <block type="color_split_color"></block>
+    </category>
+    <category name="Control" colour="%{BKY_LOGIC_HUE}">
       <category name="If">
         <block type="controls_if"></block>
-        <block type="controls_if">
-          <mutation else="1"></mutation>
-        </block>
-        <block type="controls_if">
-          <mutation elseif="1" else="1"></mutation>
-        </block>
+        <block type="controls_if_if"></block>
+        <block type="controls_if_elseif"></block>
+        <block type="controls_if_else"></block>
       </category>
-      <category name="Boolean" colour="%{BKY_LOGIC_HUE}">
-        <block type="logic_compare"></block>
-        <block type="logic_operation"></block>
-        <block type="logic_negate"></block>
-        <block type="logic_boolean"></block>
-        <block type="logic_null"></block>
-        <block type="logic_ternary"></block>
+      <category name="Loops" colour="%{BKY_LOGIC_HUE}">
+        <block type="controls_forRange"></block>
+        <block type="controls_forEach"></block>
+        <block type="controls_while"></block>
+        <block type="controls_choose"></block>
+        <block type="controls_do_then_return"></block>
+        <block type="controls_eval_but_ignore"></block>
+      </category>
+      <category name="Screens" colour="${BKY_LOGIC_HUE}">
+        <block type="controls_openAnotherScreen"></block>
+        <block type="controls_openAnotherScreenWithStartValue"></block>
+        <block type="controls_getStartValue"></block>
+        <block type="controls_closeScreen"></block>
+        <block type="controls_closeScreenWithValue"></block>
+        <block type="controls_closeApplication"></block>
+        <block type="controls_getPlainStartText"></block>
+        <block type="controls_closeScreenWithPlainText"></block>
+        <block type="controls_break"></block>
       </category>
     </category>
-    <category name="Loops" colour="%{BKY_LOOPS_HUE}">
-      <block type="controls_while"></block>
-      <block type="controls_forRange">
-        <field name="VAR">i</field>
-        <value name="FROM">
-          <block type="math_number">
-            <field name="NUM">1</field>
-          </block>
-        </value>
-        <value name="TO">
-          <block type="math_number">
-            <field name="NUM">10</field>
-          </block>
-        </value>
-        <value name="BY">
-          <block type="math_number">
-            <field name="NUM">1</field>
-          </block>
-        </value>
-      </block>
-      <block type="controls_forEach"></block>
+    <sep></sep>
+    <category name="Logics" colour="%{BKY_LOOPS_HUE}">
+      <block type="logic_boolean"></block>
+      <block type="logic_false"></block>
+      <block type="logic_negate"></block>
+      <block type="logic_compare"></block>
+      <block type="logic_operation"></block>
+      <block type="logic_or"></block>
     </category>
+    <sep></sep>
+    <category name="Text" colour="%{BKY_LOOPS_HUE}">
+      <block type="text_join"></block>
+      <block type="text_join_item"></block>
+      <block type="text_length"></block>
+      <block type="text_isEmpty"></block>
+      <block type="text_compare"></block>
+      <block type="text_trim"></block>
+      <block type="text_changeCase"></block>
+      <block type="text_starts_at"></block>
+      <block type="text_contains"></block>
+      <block type="text_split"></block>
+      <block type="text_split_at_spaces"></block>
+      <block type="text_segment"></block>
+      <block type="text_replace_all"></block>
+      <block type="obfuscated_text"></block>
+      <block type="text_is_string"></block>
+    </category>
+    <sep></sep>
     <category name="Math" colour="%{BKY_MATH_HUE}">
       <block type="math_number">
         <field name="NUM">123</field>
       </block>
-      <block type="math_arithmetic"></block>
-      <block type="math_single"></block>
-      <block type="math_trig"></block>
-      <block type="math_constant"></block>
-      <block type="math_number_property"></block>
-      <block type="math_round"></block>
-      <block type="math_on_list"></block>
-      <block type="math_modulo"></block>
-      <block type="math_constrain">
-        <value name="LOW">
-          <block type="math_number">
-            <field name="NUM">1</field>
-          </block>
-        </value>
-        <value name="HIGH">
-          <block type="math_number">
-            <field name="NUM">100</field>
-          </block>
-        </value>
-      </block>
-      <block type="math_random_int">
-        <value name="FROM">
-          <block type="math_number">
-            <field name="NUM">1</field>
-          </block>
-        </value>
-        <value name="TO">
-          <block type="math_number">
-            <field name="NUM">100</field>
-          </block>
-        </value>
-      </block>
+      <block type="math_compare"></block>
+      <block type="math_add"></block>
+      <block type="math_mutator_item"></block>
+      <block type="math_subtract"></block>
+      <block type="math_multiply"></block>
+      <block type="math_power"></block>
+      <block type="math_bitwise"></block>
+      <block type="math_random_int"></block>
       <block type="math_random_float"></block>
+      <block type="math_random_set_seed"></block>
+      <block type="math_on_list"></block>
+      <block type="math_single"></block>
+      <block type="math_abs"></block>
+      <block type="math_neg"></block>
+      <block type="math_round"></block>
+      <block type="math_ceiling"></block>
+      <block type="math_floor"></block>
+      <block type="math_divide"></block>
+      <block type="math_trig"></block>
+      <block type="math_cos"></block>
+      <block type="math_tan"></block>
       <block type="math_atan2"></block>
+      <block type="math_convert_angles"></block>
+      <block type="math_format_as_decimal"></block>
+      <block type="math_is_a_number"></block>
+      <block type="math_convert_number"></block>
     </category>
     <category name="Lists" colour="%{BKY_LISTS_HUE}">
-      <block type="lists_create_empty"></block>
       <block type="lists_create_with"></block>
-      <block type="lists_repeat">
-        <value name="NUM">
-          <block type="math_number">
-            <field name="NUM">5</field>
-          </block>
-        </value>
-      </block>
+      <block type="lists_create_with_item"></block>
+      <block type="lists_add_items"></block>
+      <block type="lists_add_items_item"></block>
+      <block type="lists_is_in"></block>
       <block type="lists_length"></block>
-      <block type="lists_isEmpty"></block>
-      <block type="lists_indexOf"></block>
-      <block type="lists_getIndex"></block>
-      <block type="lists_setIndex"></block>
+      <block type="lists_is_empty"></block>
+      <block type="lists_pick_random_item"></block>
+      <block type="lists_position_in"></block>
+      <block type="lists_select_item"></block>
+      <block type="lists_insert_item"></block>
+      <block type="lists_replace_item"></block>
+      <block type="lists_remove_item"></block>
+      <block type="lists_append_list"></block>
+      <block type="lists_copy"></block>
+      <block type="lists_is_list"></block>
+      <block type="lists_reverse"></block>
+      <block type="lists_to_csv_row"></block>
+      <block type="lists_to_csv_table"></block>
+      <block type="lists_from_csv_row"></block>
+      <block type="lists_from_csv_table"></block>
+      <block type="lists_lookup_in_pairs"></block>
+      <block type="lists_join_with_separator"></block>
     </category>
     <sep></sep>
     <category name="Variables" custom="VARIABLE" colour="%{BKY_VARIABLES_HUE}">
-    </category>
-    <category name="Functions" custom="PROCEDURE" colour="%{BKY_PROCEDURES_HUE}">
+      <block type="global_declaration"></block>
+      <block type="lexical_variable_get"></block>
+      <block type="lexical_variable_set"></block>
+      <block type="local_declaration_statement"></block>
+      <block type="local_declaration_expression"></block>
+      <block type="local_mutatorcontainer"></block>
+      <block type="local_mutatorarg"></block>
     </category>
     <sep></sep>
-    <category name="Library" expanded="true">
-      <category name="Randomize">
-        <block type="procedures_defnoreturn">
-          <mutation>
-            <arg name="list"></arg>
-          </mutation>
-          <field name="NAME">randomize</field>
-          <statement name="STACK">
-            <block type="controls_for" inline="true">
-              <field name="VAR">x</field>
-              <value name="FROM">
-                <block type="math_number">
-                  <field name="NUM">1</field>
-                </block>
-              </value>
-              <value name="TO">
-                <block type="lists_length" inline="false">
-                  <value name="VALUE">
-                    <block type="variables_get">
-                      <field name="VAR">list</field>
-                    </block>
-                  </value>
-                </block>
-              </value>
-              <value name="BY">
-                <block type="math_number">
-                  <field name="NUM">1</field>
-                </block>
-              </value>
-              <statement name="DO">
-                <block type="variables_set" inline="false">
-                  <field name="VAR">y</field>
-                  <value name="VALUE">
-                    <block type="math_random_int" inline="true">
-                      <value name="FROM">
-                        <block type="math_number">
-                          <field name="NUM">1</field>
-                        </block>
-                      </value>
-                      <value name="TO">
-                        <block type="lists_length" inline="false">
-                          <value name="VALUE">
-                            <block type="variables_get">
-                              <field name="VAR">list</field>
-                            </block>
-                          </value>
-                        </block>
-                      </value>
-                    </block>
-                  </value>
-                  <next>
-                    <block type="variables_set" inline="false">
-                      <field name="VAR">temp</field>
-                      <value name="VALUE">
-                        <block type="lists_getIndex" inline="true">
-                          <mutation statement="false" at="true"></mutation>
-                          <field name="MODE">GET</field>
-                          <field name="WHERE">FROM_START</field>
-                          <value name="AT">
-                            <block type="variables_get">
-                              <field name="VAR">y</field>
-                            </block>
-                          </value>
-                          <value name="VALUE">
-                            <block type="variables_get">
-                              <field name="VAR">list</field>
-                            </block>
-                          </value>
-                        </block>
-                      </value>
-                      <next>
-                        <block type="lists_setIndex" inline="false">
-                          <value name="AT">
-                            <block type="variables_get">
-                              <field name="VAR">y</field>
-                            </block>
-                          </value>
-                          <value name="LIST">
-                            <block type="variables_get">
-                              <field name="VAR">list</field>
-                            </block>
-                          </value>
-                          <value name="TO">
-                            <block type="lists_getIndex" inline="true">
-                              <mutation statement="false" at="true"></mutation>
-                              <field name="MODE">GET</field>
-                              <field name="WHERE">FROM_START</field>
-                              <value name="AT">
-                                <block type="variables_get">
-                                  <field name="VAR">x</field>
-                                </block>
-                              </value>
-                              <value name="VALUE">
-                                <block type="variables_get">
-                                  <field name="VAR">list</field>
-                                </block>
-                              </value>
-                            </block>
-                          </value>
-                          <next>
-                            <block type="lists_setIndex" inline="false">
-                              <value name="AT">
-                                <block type="variables_get">
-                                  <field name="VAR">x</field>
-                                </block>
-                              </value>
-                              <value name="LIST">
-                                <block type="variables_get">
-                                  <field name="VAR">list</field>
-                                </block>
-                              </value>
-                              <value name="TO">
-                                <block type="variables_get">
-                                  <field name="VAR">temp</field>
-                                </block>
-                              </value>
-                            </block>
-                          </next>
-                        </block>
-                      </next>
-                    </block>
-                  </next>
-                </block>
-              </statement>
-            </block>
-          </statement>
-        </block>
-      </category>
-      <category name="Jabberwocky">
-        <block type="text_print">
-          <value name="TEXT">
-            <block type="text">
-              <field name="TEXT">'Twas brillig, and the slithy toves</field>
-            </block>
-          </value>
-          <next>
-            <block type="text_print">
-              <value name="TEXT">
-                <block type="text">
-                  <field name="TEXT">  Did gyre and gimble in the wabe:</field>
-                </block>
-              </value>
-              <next>
-                <block type="text_print">
-                  <value name="TEXT">
-                    <block type="text">
-                      <field name="TEXT">All mimsy were the borogroves,</field>
-                    </block>
-                  </value>
-                  <next>
-                    <block type="text_print">
-                      <value name="TEXT">
-                        <block type="text">
-                          <field name="TEXT">  And the mome raths outgrabe.</field>
-                        </block>
-                      </value>
-                    </block>
-                  </next>
-                </block>
-              </next>
-            </block>
-          </next>
-        </block>
-        <block type="text_print">
-          <value name="TEXT">
-            <block type="text">
-              <field name="TEXT">"Beware the Jabberwock, my son!</field>
-            </block>
-          </value>
-          <next>
-            <block type="text_print">
-              <value name="TEXT">
-                <block type="text">
-                  <field name="TEXT">  The jaws that bite, the claws that catch!</field>
-                </block>
-              </value>
-              <next>
-                <block type="text_print">
-                  <value name="TEXT">
-                    <block type="text">
-                      <field name="TEXT">Beware the Jubjub bird, and shun</field>
-                    </block>
-                  </value>
-                  <next>
-                    <block type="text_print">
-                      <value name="TEXT">
-                        <block type="text">
-                          <field name="TEXT">  The frumious Bandersnatch!"</field>
-                        </block>
-                      </value>
-                    </block>
-                  </next>
-                </block>
-              </next>
-            </block>
-          </next>
-        </block>
-      </category>
+    <category name="Procedures" custom="PROCEDURE" colour="%{BKY_PROCEDURES_HUE}">
+      <block type="procedures_defnoreturn"></block>
+      <block type="procedures_defreturn"></block>
+      <block type="procedures_mutatorcontainer"></block>
+      <block type="procedures_mutatorarg"></block>
+      <block type="procedures_callnoreturn"></block>
+      <block type="procedures_callreturn"></block>
     </category>
   </xml>
 

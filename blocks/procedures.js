@@ -381,7 +381,7 @@ Blockly.Blocks['procedures_defnoreturn'] = {
     // order on undo
     if (editable) {
       // Dispose of any callers.
-      //Blockly.Procedures.disposeCallers(name, workspace);
+      // Blockly.Procedures.disposeCallers(name, workspace);
       Blockly.AIProcedure.removeProcedureValues(name, workspace);
     }
 
@@ -490,7 +490,7 @@ Blockly.Blocks['procedures_defreturn'] = {
         .appendField(Blockly.Msg.LANG_PROCEDURES_DEFRETURN_DEFINE)
         .appendField(nameField, 'NAME');
     this.horizontalParameters = true; // horizontal by default
-    this.appendIndentedValueInput('RETURN')
+    this.appendValueInput('RETURN')
         .appendField(Blockly.Msg.LANG_PROCEDURES_DEFRETURN_RETURN);
     this.setMutator(new Blockly.Mutator(['procedures_mutatorarg']));
     this.setTooltip(Blockly.Msg.LANG_PROCEDURES_DEFRETURN_TOOLTIP);

@@ -73,6 +73,9 @@ Blockly.inject = function(container, opt_options) {
   Blockly.user.keyMap.setKeyMap(options.keyMap);
 
   Blockly.init_(workspace);
+  workspace.componentDb_ = new Blockly.ComponentDatabase();
+  workspace.procedureDb_ = new Blockly.ProcedureDatabase(workspace);
+  workspace.variableDb_ = new Blockly.VariableDatabase();
   Blockly.mainWorkspace = workspace;
 
   Blockly.svgResize(workspace);
