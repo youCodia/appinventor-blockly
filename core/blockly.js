@@ -682,3 +682,27 @@ Blockly.checkBlockColourConstant_ = function(
 Blockly.prefixGlobalMenuName = function (name) {
   return Blockly.Msg.LANG_VARIABLES_GLOBAL_PREFIX + Blockly.menuSeparator + name;
 };
+
+// Return a list of (1) prefix (if it exists, "" if not) and (2) unprefixed name
+Blockly.unprefixName = function (name) {
+  if (name.indexOf(Blockly.Msg.LANG_VARIABLES_GLOBAL_PREFIX + Blockly.menuSeparator) == 0) {
+    // Globals always have prefix, regardless of flags. Handle these specially
+    return [Blockly.Msg.LANG_VARIABLES_GLOBAL_PREFIX, name.substring(Blockly.Msg.LANG_VARIABLES_GLOBAL_PREFIX.length + Blockly.menuSeparator.length)];
+  } else if (!Blockly.showPrefixToUser) {
+    return ["", name];
+  } else {
+    var prefixes = [Blockly.procedureParameterPrefix,
+      Blockly.handlerParameterPrefix,
+      Blockly.localNamePrefix,
+      Blockly.loopParameterPrefix,
+      Blockly.loopRangeParameterPrefix];
+    for (var i=0; i < prefixes.length; i++) {
+      if (name.indexOf(prefixes[i]) == 0) {
+        // name begins with prefix
+        return [prefixes[i], name.substring(prefixes[i].length + Blockly.menuSeparator.length)]
+      }
+    }
+    // Really an error if get here ...
+    return ["", name];
+  }
+};

@@ -1,7 +1,7 @@
 /* -*- mode: javascript; js-indent-level: 2; -*- */
 /**
  * @license
- * Copyright 2016 Massachusetts Institute of Technology. All rights reserved.
+ * Copyright  2016 Massachusetts Institute of Technology. All rights reserved.
  */
 
 /**

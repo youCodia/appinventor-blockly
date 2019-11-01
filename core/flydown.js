@@ -89,7 +89,7 @@ Blockly.Flydown.prototype.init = function(workspace) {
  * Override the flyout position method to do nothing instead
  * @private
  */
-Blockly.Flydown.prototype.position = function() {
+Blockly.Flydown.prototype.position = function(args) {
   return;
 }
 
@@ -146,7 +146,7 @@ Blockly.Flydown.prototype.reflow = function() {
     flydownHeight += blockHW.height * scale;
   }
   flydownWidth += 2*margin + Blockly.BlockSvg.TAB_WIDTH * scale; // TAB_WIDTH is with of plug
-  flydownHeight += 2*margin + margin*this.VERTICAL_SEPARATION_FACTOR*(blocks.length - 1) + Blockly.BlockSvg.START_HAT_HEIGHT*scale/2.0;
+  flydownHeight += 2*margin + margin*this.VERTICAL_SEPARATION_FACTOR*(blocks.length - 1) + this.CORNER_RADIUS*scale;
   if (this.width_ != flydownWidth) {
     for (var j = 0, block; block = blocks[j]; j++) {
       var blockHW = block.getHeightWidth();
@@ -268,26 +268,25 @@ Blockly.Flydown.prototype.getMetrics_ = function() {
     var optionBox = {height: 0, y: 0, width: 0, x: 0};
   }
 
+  // Padding for the end of the scrollbar.
   var absoluteTop = this.SCROLLBAR_PADDING;
-  var absoluteLeft = this.SCROLLBAR_PADDING;
-  if (this.toolboxPosition_ == Blockly.TOOLBOX_AT_BOTTOM) {
-    absoluteTop = 0;
+  var absoluteLeft = 0;
+
+  var viewHeight = this.height_ - 2 * this.SCROLLBAR_PADDING;
+  var viewWidth = this.width_;
+  if (!this.RTL) {
+    viewWidth -= this.SCROLLBAR_PADDING;
   }
-  var viewHeight = this.height_;
-  if (this.toolboxPosition_ == Blockly.TOOLBOX_AT_TOP) {
-    viewHeight -= this.SCROLLBAR_PADDING;
-  }
-  var viewWidth = this.width_ - 2 * this.SCROLLBAR_PADDING;
 
   var metrics = {
     viewHeight: viewHeight,
     viewWidth: viewWidth,
-    contentHeight: (optionBox.height + 2 * this.MARGIN) * this.workspace_.scale,
-    contentWidth: (optionBox.width + 2 * this.MARGIN) * this.workspace_.scale,
-    viewTop: -this.workspace_.scrollY,
+    contentHeight: optionBox.height * this.workspace_.scale + 2 * this.MARGIN,
+    contentWidth: optionBox.width * this.workspace_.scale + 2 * this.MARGIN,
+    viewTop: -this.workspace_.scrollY + optionBox.y,
     viewLeft: -this.workspace_.scrollX,
-    contentTop: 0,
-    contentLeft: 0,
+    contentTop: optionBox.y,
+    contentLeft: optionBox.x,
     absoluteTop: absoluteTop,
     absoluteLeft: absoluteLeft
   };
@@ -313,5 +312,46 @@ Blockly.Flydown.prototype.setMetrics_ = function(xyRatio) {
   this.workspace_.translate(this.workspace_.scrollX + metrics.absoluteLeft,
     this.workspace_.scrollY + metrics.absoluteTop);
 }
+
+/**
+ * Lay out the blocks in the flyout.
+ * @param {!Array.<!Object>} contents The blocks and buttons to lay out.
+ * @param {!Array.<number>} gaps The visible gaps between blocks.
+ * @private
+ */
+Blockly.Flydown.prototype.layout_ = function(contents, gaps) {
+  this.workspace_.scale = this.targetWorkspace_.scale;
+  var margin = this.MARGIN;
+  var cursorX = this.RTL ? margin : margin + this.tabWidth_;
+  var cursorY = margin;
+
+  for (var i = 0, item; item = contents[i]; i++) {
+    if (item.type == 'block') {
+      var block = item.block;
+      var allBlocks = block.getDescendants(false);
+      for (var j = 0, child; child = allBlocks[j]; j++) {
+        // Mark blocks as being inside a flyout.  This is used to detect and
+        // prevent the closure of the flyout if the user right-clicks on such a
+        // block.
+        child.isInFlyout = true;
+      }
+      block.render();
+      var root = block.getSvgRoot();
+      var blockHW = block.getHeightWidth();
+      var moveX = block.outputConnection ? cursorX - this.tabWidth_ : cursorX;
+      block.moveBy(moveX, cursorY);
+
+      var rect = this.createRect_(block,
+        this.RTL ? moveX - blockHW.width : moveX, cursorY, blockHW, i);
+
+      this.addBlockListeners_(root, block, rect);
+
+      cursorY += blockHW.height + gaps[i];
+    } else if (item.type == 'button') {
+      this.initFlyoutButton_(item.button, cursorX, cursorY);
+      cursorY += item.button.height + gaps[i];
+    }
+  }
+};
 
 // Note: nothing additional beyond flyout disposal needs to be done to dispose of a flydown.
