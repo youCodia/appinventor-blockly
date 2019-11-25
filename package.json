@@ -1,20 +1,20 @@
 {
-  "name": "blockly",
-  "version": "3.20191014.4",
-  "description": "Blockly is a library for building visual programming editors.",
+  "name": "appinventor-blockly",
+  "version": "0.1.0",
+  "description": "Blockly for App Inventor",
   "keywords": [
-    "blockly"
+    "blockly",
+    "app inventor"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/google/blockly.git"
+    "url": "https://github.com/youCodia/appinventor-blockly.git"
   },
   "bugs": {
-    "url": "https://github.com/google/blockly/issues"
+    "url": "https://github.com/youCodia/appinventor-blockly/issues"
   },
-  "homepage": "https://developers.google.com/blockly/",
   "author": {
-    "name": "Neil Fraser"
+    "name": "Warren Chan"
   },
   "scripts": {
     "build": "gulp build",

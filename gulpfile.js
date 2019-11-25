@@ -193,7 +193,7 @@ goog.provide('Blockly.utils.string');`;
 
 /**
  * This task builds the javascript generator.
- *     javascript_compressed.js
+ *     yail_compressed.js
  */
 gulp.task('build-yail', function() {
   return buildGenerator('yail', 'Yail');
@@ -480,8 +480,8 @@ gulp.task('package-browser', function() {
         cjs: './blocks',
       },{
         name: 'BlocklyJS',
-        amd: './javascript',
-        cjs: './javascript',
+        amd: './yail',
+        cjs: './yail',
       }]))
     .pipe(gulp.rename('browser.js'))
     .pipe(gulp.dest(packageDistribution));
@@ -526,20 +526,8 @@ gulp.task('package-node', function() {
         name: 'BlocklyBlocks',
         cjs: './blocks',
       },{
-        name: 'BlocklyJS',
-        cjs: './javascript',
-      },{
-        name: 'BlocklyPython',
-        cjs: './python',
-      },{
-        name: 'BlocklyPHP',
-        cjs: './php',
-      },{
-        name: 'BlocklyLua',
-        cjs: './lua',
-      }, {
-        name: 'BlocklyDart',
-        cjs: './dart',
+        name: 'BlocklyYail',
+        cjs: './yail',
       }]))
     .pipe(gulp.rename('node.js'))
     .pipe(gulp.dest(packageDistribution));
@@ -582,7 +570,7 @@ function packageGenerator(file, rename, generator) {
 };
 
 /**
- * This task wraps javascript_compressed.js into a UMD module.
+ * This task wraps yail_compressed.js into a UMD module.
  * @example import 'blockly/javascript';
  */
 gulp.task('package-yail', function() {
@@ -618,7 +606,7 @@ gulp.task('package-umd-bundle', function() {
     'blockly_compressed.js',
     'msg/js/en.js',
     'blocks_compressed.js',
-    'javascript_compressed.js'
+    'yail_compressed.js'
   ];
   return gulp.src(srcs)
     .pipe(gulp.concat('blockly.min.js'))

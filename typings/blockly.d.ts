@@ -802,6 +802,44 @@ declare module Blockly {
              * @return {string} The description.
              */
             toDevString(): string;
+    
+            /**
+             * Interpolate a message string, creating fields and inputs.
+             * @param {string} msg The message string to parse.  %1, %2, etc. are symbols
+             *     for value inputs or for Fields, such as an instance of
+             *     Blockly.FieldDropdown, which would be placed as a field in either the
+             *     following value input or a dummy input.  The newline character forces
+             *     the creation of an unnamed dummy input if any fields need placement.
+             *     Note that '%10' would be interpreted as a reference to the tenth
+             *     argument.  To show the first argument followed by a zero, use '%1 0'.
+             *     (Spaces around tokens are stripped.)  To display a percentage sign
+             *     followed by a number (e.g., "%123"), put that text in a
+             *     Blockly.FieldLabel (as described below).
+             * @param {!Array.<?string|number|Array.<string>|Blockly.Field>|number} var_args
+             *     A series of tuples that each specify the value inputs to create.  Each
+             *     tuple has at least two elements.  The first is its name; the second is
+             *     its type, which can be any of:
+             *     - A string (such as 'Number'), denoting the one type allowed in the
+             *       corresponding socket.
+             *     - An array of strings (such as ['Number', 'List']), denoting the
+             *       different types allowed in the corresponding socket.
+             *     - null, denoting that any type is allowed in the corresponding socket.
+             *     - Blockly.Field, in which case that field instance, such as an
+             *       instance of Blockly.FieldDropdown, appears (instead of a socket).
+             *     If the type is any of the first three options (which are legal arguments
+             *     to setCheck()), there should be a third element in the tuple, giving its
+             *     alignment.
+             *     The final parameter is not a tuple, but just an alignment for any
+             *     trailing dummy inputs.  This last parameter is mandatory; there may be
+             *     any number of tuples (though the number of tuples must match the symbols
+             *     in msg).
+             */
+            interpolateMsg(msg: string, var_args: string|number|string[]|Blockly.Field[]|number): void;
+    
+            /**
+             Unplug this block from every block connected to it.
+             */
+            isolate(healStack: any /* jsdoc error */): void;
     } 
     
 }
@@ -1751,6 +1789,12 @@ declare module Blockly {
              * @package
              */
             highlightForReplacement(add: boolean): void;
+    
+            /**
+             * Get the top-most workspace. Typically this is the current workspace except for flyout/flydowns.
+             * @returns {!Blockly.WorkspaceSvg}
+             */
+            getTopWorkspace(): Blockly.WorkspaceSvg;
     } 
     
 }
@@ -1775,7 +1819,6 @@ declare module Blockly.BlockSvg {
 
     /**
      * Vertical space between elements.
-     * TODO (#3142): Remove.
      * @const
      * @package
      */
@@ -1783,7 +1826,6 @@ declare module Blockly.BlockSvg {
 
     /**
      * Minimum height of a block.
-     * TODO (#3142): Remove.
      * @const
      * @package
      */
@@ -1791,7 +1833,6 @@ declare module Blockly.BlockSvg {
 
     /**
      * Width of horizontal puzzle tab.
-     * TODO (#3142): Remove.
      * @const
      * @package
      */
@@ -1799,7 +1840,6 @@ declare module Blockly.BlockSvg {
 
     /**
      * Do blocks with no previous or output connections have a 'hat' on top?
-     * TODO (#3142): Remove.
      * @const
      * @package
      */
@@ -2248,6 +2288,266 @@ declare module Blockly {
              * should not be called directly. Instead call block.setCommentText(null);
              */
             dispose(): void;
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class ComponentDatabase extends ComponentDatabase__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class ComponentDatabase__Class  { 
+    
+            /**
+             * Database for component type information and instances.
+             * @constructor
+             */
+            constructor();
+    
+            /** @type {Object.<string, ComponentInstanceDescriptor>} */
+            instances_: { [key: string]: ComponentInstanceDescriptor };
+    
+            /** @type {Object.<string, ComponentTypeDescriptor>} */
+            types_: { [key: string]: ComponentTypeDescriptor };
+    
+            /** @type {Object.<string, string>} */
+            instanceNameUid_: { [key: string]: string };
+    
+            /**
+             * Add a new instance to the ComponentDatabase.
+             * @param {!string} uid UUID of the component instance
+             * @param {!string} name Name of the component instance
+             * @param {!string} typeName Type of the component instance
+             * @returns {boolean} true if the component was added, false if a component exists with the given
+             * UUID.
+             */
+            addInstance(uid: string, name: string, typeName: string): boolean;
+    
+            /**
+             * Check whether an instance exists with the given UUID.
+             * @param {!string} uid UUID to look up in the database
+             * @returns {boolean} true if a component exists with the UUID, otherwise false.
+             */
+            hasInstance(uid: string): boolean;
+    
+            /**
+             * Get a component instance for the given UUID or Name.
+             * @param {!string} uidOrName UUID for the component. This method also takes a Name for backwards
+             * compatibility with methods that do not yet refer to a component by UUID.
+             * @returns {{typeName: !string, name: !string}|ComponentInstanceDescriptor} An internal descriptor
+             * of a component, otherwise undefined.
+             */
+            getInstance(uidOrName: string): { typeName: string; name: string }|ComponentInstanceDescriptor;
+    
+            /**
+             * Rename a component instance in the ComponentDatabase.
+             * @param {!string} uid UUID of the component to be renamed
+             * @param {!string} oldName Old name of the component
+             * @param {!string} newName New name for the component
+             * @returns {boolean} true if the component was successfully renamed, otherwise false.
+             */
+            renameInstance(uid: string, oldName: string, newName: string): boolean;
+    
+            /**
+             * Remove a component instance in the ComponentDatabase.
+             * @param {!string} uid UUID of the component to be removed
+             * @returns {boolean} true if the component was removed, otherwise false.
+             */
+            removeInstance(uid: string): boolean;
+    
+            /**
+             * Iterate over all component instances calling the callback function with the
+             * instance and its UUID.
+             *
+             * @param {function(!ComponentInstanceDescriptor, !string)} callback
+             */
+            forEachInstance(callback: { (_0: ComponentInstanceDescriptor, _1: string): any /*missing*/ }): void;
+    
+            /**
+             * Check whether the ComponentDatabase has a type identified by typeName.
+             *
+             * @param {!string} typeName String identifying a component type
+             * @returns {boolean} true if the type is known to the ComponentDatabase, otherwise false.
+             */
+            hasType(typeName: string): boolean;
+    
+            /**
+             * Get the ComponentTypeDescriptor associated with the given typeName.
+             * @param {!string} typeName String identifying a component type.
+             * @returns {ComponentTypeDescriptor} The ComponentTypeDescriptor for the type, or undefined if no
+             * type is registered with the supplied typeName.
+             */
+            getType(typeName: string): ComponentTypeDescriptor;
+    
+            /**
+             * Get the names of the component instances in the database.
+             * @returns {Array.<string>} An array of user-provided names for components.
+             */
+            getInstanceNames(): string[];
+    
+            /**
+             * Get the name of the type for the given component instance name.
+             * @param {!string} instanceName The name of a component instance (e.g., Button1)
+             * @returns {string|boolean} The name of the component's type if it exists, otherwise false.
+             */
+            instanceNameToTypeName(instanceName: string): string|boolean;
+    
+            /**
+             * Obtain an array of (name, uuid) pairs for displaying components in
+             * a dropdown list.
+             *
+             * @returns {!Array.<!Array<string>>} An array of pairs containing a
+             * text value to display for the name of a component and a UUID
+             * identifying the component.
+             */
+            getComponentUidNameMapByType(componentType: any /* jsdoc error */): string[][];
+    
+            /**
+             * Obtain names of known components for presentation in dropdown fields.
+             *
+             * @param {!string} componentType The untranslated component type (e.g., button)
+             * @returns {Array.<Array.<string>>} An array of 2-tuples containing the name of each component
+             *   of the given componentType. If no components are declared, a single element list is returned
+             *   with the pair (' ', 'none').
+             */
+            getComponentNamesByType(componentType: string): string[][];
+    
+            /**
+             * Populate the types database.
+             *
+             * @param {ComponentInfo[]} componentInfos
+             */
+            populateTypes(componentInfos: ComponentInfo[]): void;
+    
+            /**
+             * Populate the tranlsations for components.
+             * @param translations
+             */
+            populateTranslations(translations: any /*missing*/): void;
+    
+            /**
+             * Get the event type descriptor for a given type, event pair.
+             *
+             * @param {!string} typeName
+             * @param {!string} eventName
+             * @returns {EventDescriptor}
+             */
+            getEventForType(typeName: string, eventName: string): EventDescriptor;
+    
+            /**
+             * Iterate over the events declared in typeName calling the provided callback.
+             *
+             * @param {!string} typeName
+             * @param {!EventIterationCallback} callback
+             */
+            forEventInType(typeName: string, callback: EventIterationCallback): void;
+    
+            /**
+             * Get the method type descriptor for a given type, method pair.
+             *
+             * @param {!string} typeName
+             * @param {!string} methodName
+             * @returns {(MethodDescriptor|undefined)}
+             */
+            getMethodForType(typeName: string, methodName: string): MethodDescriptor|any /*undefined*/;
+    
+            /**
+             * Iterate over the methods declared in typeName calling the provided callback.
+             *
+             * @param {!string} typeName
+             * @param {!MethodIterationCallback} callback
+             */
+            forMethodInType(typeName: string, callback: MethodIterationCallback): void;
+    
+            /**
+             * Get the property descriptor for a given typeName named by propertyName.
+             * @param {!string} typeName String naming a component type
+             * @param {!string} propertyName String naming a property defined on typeName
+             * @returns {?PropertyDescriptor} The PropertyDescriptor for the property, or null if no such
+             * property or type is defined.
+             */
+            getPropertyForType(typeName: string, propertyName: string): PropertyDescriptor;
+    
+            /**
+             * Get a list of setter property names for a type.
+             * @param {!string} typeName String naming a component type
+             * @returns {?string[]} An array of property names that are writable, otherwise null if the type
+             * does not exist.
+             */
+            getSetterNamesForType(typeName: string): void;
+    
+            /**
+             * Get a list of the getter property names for a type.
+             * @param {!string} typeName String naming a component type
+             * @returns {?string[]} An array of property names that are readable, otherwise null if the type
+             * does not exist.
+             */
+            getGetterNamesForType(typeName: string): void;
+    
+            /**
+             * Get the internationalized string for the given component type.
+             * @param {!string} name String naming a component type
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedComponentType(name: string, opt_default: any /*missing*/): string;
+    
+            /**
+             * Get the internationalized string for the given event name.
+             * @param {!string} name String naming a component event
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedEventName(name: string, opt_default: any /*missing*/): string;
+    
+            /**
+             * Get the internationalized string for the given event description tooltip.
+             * @param {!string} name String naming a component event
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedEventDescription(name: string, opt_default: any /*missing*/): string;
+    
+            /**
+             * Get the internationalized string for the given method name.
+             * @param {!string} name String naming a component method
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedMethodName(name: string, opt_default: any /*missing*/): string;
+    
+            /**
+             * Get the internationalized string for the given method name.
+             * @param {!string} name String naming a component method
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedMethodDescription(name: string, opt_default: any /*missing*/): string;
+    
+            /**
+             * Get the internationalized string for the given parameter name.
+             * @param {!string} name String naming a component event or method parameter
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedParameterName(name: string, opt_default: any /*missing*/): string;
+    
+            /**
+             * Get the internationalized string for the given property name.
+             * @param {!string} name String naming a component property
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedPropertyName(name: string, opt_default: any /*missing*/): string;
+    
+            /**
+             * Get the internationalized string for the given property description tooltip.
+             * @param {!string} name String naming a component property
+             * @param {?string=name} opt_default Optional default value (default: name parameter)
+             * @returns {string} The localized string if available, otherwise the unlocalized name.
+             */
+            getInternationalizedPropertyDescription(name: string, opt_default: any /*missing*/): string;
     } 
     
 }
@@ -2977,13 +3277,13 @@ declare module Blockly.DropDownDiv {
     /**
      * Timer for animation out, to be cleared if we need to immediately hide
      * without disrupting new shows.
-     * @type {number}
+     * @type {?number}
      */
     var animateOutTimer_: number;
 
     /**
      * Callback for when the drop-down is hidden.
-     * @type {Function}
+     * @type {?Function}
      */
     var onHide_: Function;
 
@@ -3043,14 +3343,14 @@ declare module Blockly.DropDownDiv {
      * by a particular field. The primary position will be below the field,
      * and the secondary position above the field. Drop-down will be
      * constrained to the block's workspace.
-     * @param {!Object} owner The object showing the drop-down.
+     * @param {!Blockly.Field} field The field to position the dropdown against.
      * @param {Function=} opt_onHide Optional callback for when the drop-down is
      *   hidden.
      * @param {number=} opt_secondaryYOffset Optional Y offset for above-block
      *   positioning.
      * @return {boolean} True if the menu rendered below block; false if above.
      */
-    function showPositionedByField(owner: Object, opt_onHide?: Function, opt_secondaryYOffset?: number): boolean;
+    function showPositionedByField(field: Blockly.Field, opt_onHide?: Function, opt_secondaryYOffset?: number): boolean;
 
     /**
      * Show and place the drop-down.
@@ -3061,14 +3361,16 @@ declare module Blockly.DropDownDiv {
      * If we can't maintain the container bounds at the primary point, fall-back to the
      * secondary point and position above.
      * @param {Object} owner The object showing the drop-down
+     * @param {boolean} rtl Right-to-left (true) or left-to-right (false).
      * @param {number} primaryX Desired origin point x, in absolute px
      * @param {number} primaryY Desired origin point y, in absolute px
      * @param {number} secondaryX Secondary/alternative origin point x, in absolute px
      * @param {number} secondaryY Secondary/alternative origin point y, in absolute px
      * @param {Function=} opt_onHide Optional callback for when the drop-down is hidden
      * @return {boolean} True if the menu rendered at the primary origin point.
+     * @package
      */
-    function show(owner: Object, primaryX: number, primaryY: number, secondaryX: number, secondaryY: number, opt_onHide?: Function): boolean;
+    function show(owner: Object, rtl: boolean, primaryX: number, primaryY: number, secondaryX: number, secondaryY: number, opt_onHide?: Function): boolean;
 
     /**
      * Helper to position the drop-down and the arrow, maintaining bounds.
@@ -3532,7 +3834,7 @@ declare module Blockly {
             /**
              * Abstract class for an editable field.
              * @param {*} value The initial value of the field.
-             * @param {Function=} opt_validator  A function that is called to validate
+             * @param {?Function=} opt_validator  A function that is called to validate
              *    changes to the field's value. Takes in a value & returns a validated
              *    value, or null to abort the change.
              * @param {Object=} opt_config A map of options used to configure the field. See
@@ -4681,6 +4983,111 @@ declare module Blockly.FieldDropdown {
 
 declare module Blockly {
 
+    class FieldFlydown extends FieldFlydown__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FieldFlydown__Class extends Blockly.FieldTextInput__Class  { 
+    
+            /**
+             * Class for a clickable parameter field.
+             * @param {string} text The initial parameter name in the field.
+             * @param {Function} opt_changeHandler An optional function that is called
+             *     to validate any constraints on what the user entered.  Takes the new
+             *     text as an argument and returns the accepted text or null to abort
+             *     the change. E.g., for an associated getter/setter this could change
+             *     references to names in this field.
+             * @extends {Blockly.FieldTextInput}
+             * @constructor
+             */
+            constructor(name: any /* jsdoc error */, isEditable: any /* jsdoc error */, displayLocation: any /* jsdoc error */, opt_changeHandler: Function);
+    
+            /**
+             * Default CSS class name for the field itself
+             * @type {String}
+             * @const
+             */
+            fieldCSSClassName: String;
+    
+            /**
+             * Default CSS class name for the flydown that flies down from the field
+             * @type {String}
+             * @const
+             */
+            flyoutCSSClassName: String;
+    
+            /**
+             * Returns a thunk that creates a Flydown block of the getter and setter blocks for receiver field.
+             *  @return A thunk (zero-parameter function).
+             */
+            showFlydownMaker_(): void;
+    
+            /**
+             * Creates a Flydown block of the getter and setter blocks for the parameter name in this field.
+             */
+            showFlydown_(): void;
+    
+            /**
+             * Close the flydown and dispose of all UI.
+             */
+            dispose(): void;
+    } 
+    
+}
+
+declare module Blockly.FieldFlydown {
+
+    /**
+     * Milliseconds to wait before showing flydown after mouseover event on flydown field.
+     * @type {number}
+     * @const
+     */
+    var timeout: number;
+
+    /**
+     * Process ID for timer event to show flydown (scheduled by mouseover event)
+     * @type {number}
+     * @const
+     */
+    var showPid_: number;
+
+    /**
+     * Control positioning of flydown
+     */
+    var DISPLAY_BELOW: any /*missing*/;
+
+    /**
+     * Hide the flydown menu and squash any timer-scheduled flyout creation
+     */
+    function hide(): void;
+}
+
+
+declare module Blockly {
+
+    class FieldGlobalFlydown extends FieldGlobalFlydown__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FieldGlobalFlydown__Class extends Blockly.Field__Class  { 
+    
+            /**
+             * Class for a clickable global variable declaration field.
+             * @param {string} text The initial parameter name in the field.
+             * @extends {Blockly.Field}
+             * @constructor
+             */
+            constructor(name: any /* jsdoc error */, displayLocation: any /* jsdoc error */);
+    
+            /**
+             * Block creation menu for global variables
+             * Returns a list of two XML elements: a getter block for name and a setter block for this parameter field.
+             *  @return {!Array.<string>} List of two XML elements.
+             **/
+            flydownBlocksXML_(): string[];
+    } 
+    
+}
+
+
+declare module Blockly {
+
     class FieldImage extends FieldImage__Class { }
     /** Fake class which should be extended to avoid inheriting static properties */
     class FieldImage__Class extends Blockly.Field__Class  { 
@@ -4895,6 +5302,289 @@ declare module Blockly.FieldLabelSerializable {
 
 declare module Blockly {
 
+    class FieldLexicalVariable extends FieldLexicalVariable__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FieldLexicalVariable__Class extends any__Class /*missing*/  { 
+    
+            /**
+             * Class for a variable's dropdown field.
+             * @param {!string} varname The default name for the variable.  If null,
+             *     a unique variable name will be generated.
+             * @extends Blockly.FieldDropdown
+             * @constructor
+             */
+            constructor(varname: string);
+    
+            /**
+             * Set the variable name.
+             * @param {string} text New text.
+             */
+            setValue(text: string): void;
+    
+            /**
+             * Update the eventparam mutation associated with the field's source block.
+             */
+            updateMutation(): void;
+    
+            /**
+             * Get the block holding this drop-down variable chooser
+             * @return {string} Block holding this drop-down variable chooser.
+             */
+            getBlock(): string;
+    
+            /**
+             * Set the block holding this drop-down variable chooser. Also initializes the cachedParent.
+             * @param {?Blockly.Block} block Block holding this drop-down variable chooser
+             */
+            setBlock(block: Blockly.Block): void;
+    
+            /**
+             * Get the cached parent of the block holding this drop-down variable chooser
+             * @return {string} Cached parent of the block holding this drop-down variable chooser.
+             */
+            getCachedParent(): string;
+    
+            /**
+             * Set the cached parent of the block holding this drop-down variable chooser.
+             * This is used for detecting when the parent has changed in the onchange event handler.
+             * @param {string} Parent of the block holding this drop-down variable chooser
+             */
+            setCachedParent(parent: any /* jsdoc error */): void;
+    
+            /**
+             * @this A FieldLexicalVariable instance
+             * @returns {list} A list of all global and lexical names in scope at the point of the getter/setter
+             *   block containing this FieldLexicalVariable instance. Global names are listed in sorted
+             *   order before lexical names in sorted order.
+             */
+            getNamesInScope(): void;
+    } 
+    
+}
+
+declare module Blockly.FieldLexicalVariable {
+
+    /**
+     * @param block
+     * @returns {Array.<Array.<string>>} A list of pairs representing the translated
+     * and untranslated name of every variable in the scope of the current block.
+     */
+    function getNamesInScope(block: any /*missing*/): string[][];
+
+    /**
+     * @param block
+     * @returns {Array.<Array.<string>>} A list of all lexical names (in sorted order) in scope at the point of the given block
+     *   If Blockly.usePrefixInYail is true, returns names prefixed with labels like "param", "local", "index";
+     *   otherwise returns unprefixed names.
+     */
+    function getLexicalNamesInScope(block: any /*missing*/): string[][];
+
+    /**
+     * Return a sorted list of variable names for variable dropdown menus.
+     * @return {!Array.<string>} Array of variable names.
+     * @this {!Blockly.FieldLexicalVariable}
+     */
+    function dropdownCreate(): string[];
+
+    /**
+     * Event handler for a change in variable name.
+     * // [lyn, 11/10/12] *** Not clear this needs to do anything for lexically scoped variables.
+     * Special case the 'New variable...' and 'Rename variable...' options.
+     * In both of these special cases, prompt the user for a new name.
+     * @param {string} text The selected dropdown menu option.
+     * @this {!Blockly.FieldLexicalVariable}
+     */
+    function dropdownChange(text: string): void;
+
+    /**
+     * Possibly add a digit to name to disintguish it from names in list.
+     * Used to guarantee that two names aren't the same in situations that prohibit this.
+     * @param {string} name Proposed name.
+     * @param {string list} nameList List of names with which name can't conflict
+     * @return {string} Non-colliding name.
+     */
+    function nameNotIn(name: string, nameList: any /*missing*/): string;
+
+    /**
+     * Split name into digit suffix and prefix before it.
+     * Return two-element list of prefix and suffix strings. Suffix is empty if no digits.
+     * @param {string} name Input string
+     * @return {string list} Two-element list of prefix and suffix
+     */
+    function prefixSuffix(name: string): void;
+}
+
+declare module Blockly.LexicalVariable {
+
+    /**
+     * Rename the old name currently in this field to newName in the block assembly rooted
+     * at the source block of this field (where "this" names the field of interest).
+     * See the documentation for renameParamFromTo for more details.
+     * @param newName
+     * @returns {string} The (possibly changed version of) newName, which may be changed
+     *   to avoid variable capture with both external declarations (declared above the
+     *   declaration of this name) or internal declarations (declared inside the scope
+     *   of this name).
+     */
+    function renameParam(newName: any /*missing*/): string;
+
+    /**
+     * [lyn, written 11/15/13, installed 07/01/14]
+     * Refactored from renameParam and extended.
+     * Rename oldName to newName in the block assembly rooted at this block
+     * (where "this" names the block of interest). The names may refer to any nonglobal
+     * parameter name (procedure parameter, event parameter, local name, or loop index variable).
+     * This function consistently renames all references to oldName by newName in all
+     * getter and setter blocks that refer to oldName, correctly handling inner declarations
+     * that use oldName. In cases where renaming oldName to newName would result in variable
+     * capture of newName by another declaration, such capture is avoided by either:
+     *    1. (If renameCapturables is true):  consistently renaming the capturing declarations
+     *       (by adding numbers to the end) so that they do not conflict with newName (or each other).
+     *    2. (If renameCapturables is false): renaming the proposed newName (by adding
+     *       numbers to the end) so that it does not conflict with capturing declarations).
+     * @param block  the root source block containing the parameter being renamed
+     * @param oldName
+     * @param newName
+     * @param renameCapturables in capture situations, determines whether capturing declarations
+     *   are renamed (true) or newName is renamed (false)
+     * @returns {string} if renameCapturables is true, returns the given newName; if renameCapturables
+     *   is false, returns the (possibly renamed version of) newName, which may be changed
+     *   to avoid variable capture with both external declarations (declared above the
+     *   declaration of this name) or internal declarations (declared inside the scope
+     *   of this name).
+     */
+    function renameParamFromTo(block: any /*missing*/, oldName: any /*missing*/, newName: any /*missing*/, renameCapturables: any /*missing*/): string;
+
+    /**
+     * [lyn, written 11/15/13, installed 07/01/14]
+     * Rename oldName to newName in the block assembly rooted at this block.
+     * In the case where newName would be captured by an internal declaration,
+     *  consistently rename the declaration and all its uses to avoid variable capture.
+     * In the case where newName would be captured by an external declaration, throw an exception.
+     * @param sourceBlock  the root source block containing the declaration of oldName
+     * @param oldName
+     * @param newName
+     */
+    function renameParamRenamingCapturables(sourceBlock: any /*missing*/, oldName: any /*missing*/, newName: any /*missing*/): void;
+
+    /**
+     * [lyn, written 11/15/13, installed 07/01/14]
+     * Rename all free variables in this block according to the given renaming
+     * @param block: any block
+     * @param freeRenaming: a dictionary (i.e., object) mapping old names to new names
+     */
+    function renameFree(block: any /*missing*/, freeSubstitution: any /* jsdoc error */): void;
+
+    /**
+     * [lyn, written 11/15/13, installed 07/01/14]
+     * Return a nameSet of all free variables in the given block
+     * @param block
+     * @returns (NameSet) set of all free names in block
+     */
+    function freeVariables(block: any /*missing*/): void;
+
+    /**
+     * [lyn, written 11/15/13, installed 07/01/14] Refactored from renameParam
+     * Rename oldName to newName in the block assembly rooted at this block.
+     * In the case where newName would be captured by internal or external declaration,
+     * change it to a name (with a number suffix) that would not be captured.
+     * @param sourceBlock  the root source block containing the declaration of oldName
+     * @param oldName
+     * @param newName
+     *  @returns {string} the (possibly renamed version of) newName, which may be changed
+     *   to avoid variable capture with both external declarations (declared above the
+     *   declaration of this name) or internal declarations (declared inside the scope
+     *   of this name).
+     */
+    function renameParamWithoutRenamingCapturables(sourceBlock: any /*missing*/, oldName: any /*missing*/, newName: any /*missing*/, OKNewNames: any /* jsdoc error */): string;
+
+    /**
+     * [lyn, written 11/15/13, installed 07/01/14] Refactored from renameParam()
+     * @param oldName
+     * @returns {pair} Returns a pair of
+     *   (1) All getter/setter blocks that reference oldName
+     *   (2) A list of all non-global names to which oldName cannot be renamed because doing
+     *       so would change the reference "wiring diagram" and thus the meaning
+     *       of the program. This is the union of:
+     *          (a) all names declared between the declaration of oldName and a reference to old name; and
+     *          (b) all names declared in a parent of the oldName declaration that are referenced in the scope of oldName.
+     *       In the case where prefixes are used (e.g., "param a", "index i, "local x")
+     *       this is a list of *unprefixed* names.
+     */
+    function renameParamWithoutRenamingCapturablesInfo(sourceBlock: any /* jsdoc error */, oldName: any /*missing*/, sourcePrefix: any /* jsdoc error */): pair;
+
+    /**
+     * [lyn, 10/27/13]
+     * Checks an identifier for validity. Validity rules are a simplified version of Kawa identifier rules.
+     * They assume that the YAIL-generated version of the identifier will be preceded by a legal Kawa prefix:
+     *
+     *   <identifier> = <first><rest>*
+     *   <first> = letter U charsIn("_$?~@")
+     *   <rest> = <first> U digit
+     *
+     *   Note: an earlier version also allowed characters in "!&%.^/+-*>=<",
+     *   but we decided to remove these because (1) they may be used for arithmetic,
+     *   logic, and selection infix operators in a future AI text language, and we don't want
+     *   things like a+b, !c, d.e to be ambiguous between variables and other expressions.
+     *   (2) using chars in "><&" causes HTML problems with getters/setters in flydown menu.
+     *
+     * First transforms the name by removing leading and trailing whitespace and
+     * converting nonempty sequences of internal whitespace to '_'.
+     * Returns a result object of the form {transformed: <string>, isLegal: <bool>}, where:
+     * result.transformed is the transformed name and result.isLegal is whether the transformed
+     * named satisfies the above rules.
+     */
+    function checkIdentifier(ident: any /* jsdoc error */): void;
+
+    /**
+     * [lyn, 11/16/13] Created
+     * @param strings1: an array of strings
+     * @param strings2: an array of strings
+     * @returns true iff strings1 and strings2 have the same names in the same order; false otherwise
+     */
+    function stringListsEqual(strings1: any /*missing*/, strings2: any /*missing*/): void;
+
+    /**
+     * [lyn, 07/03/14] Created
+     * [jis, 09/18/15] Refactored into two procedures
+     * @param block: a getter or setter block
+     *
+     * Creates the mutation for the eventparam attribute
+     */
+    function eventParamMutationToDom(block: any /*missing*/): void;
+
+    /**
+     * @param block: a getter or setter block
+     *
+     * For getter or setter block of event parameters, sets the eventparam
+     * field of the block which contains the default (untranslated =
+     * English) name for event parameters.
+     *
+     */
+    function getEventParam(block: any /*missing*/): void;
+
+    /**
+     * [lyn, 07/03/14] Created
+     * @param block: a getter or setter block
+     * @param xmlElement: an XML element
+     * For getters and setters of event parameters, marks them specially
+     * with a eventparam property to support i8n.
+     * This is used only by Blockly.LexicalVariable.eventParameterDict
+     */
+    function eventParamDomToMutation(block: any /*missing*/, xmlElement: any /*missing*/): void;
+
+    /**
+     * [lyn, 07/03/14] Created
+     * @param block: a block
+     * @returns a "dictionary" object that maps all default event parameter names
+     *   used in the block to their translated names.
+     */
+    function eventParameterDict(block: any /*missing*/): void;
+}
+
+
+declare module Blockly {
+
     class FieldMultilineInput extends FieldMultilineInput__Class { }
     /** Fake class which should be extended to avoid inheriting static properties */
     class FieldMultilineInput__Class extends Blockly.FieldTextInput__Class  { 
@@ -4988,10 +5678,10 @@ declare module Blockly {
              * Class for an editable number field.
              * @param {string|number=} opt_value The initial value of the field. Should cast
              *    to a number. Defaults to 0.
-             * @param {(string|number)=} opt_min Minimum value.
-             * @param {(string|number)=} opt_max Maximum value.
-             * @param {(string|number)=} opt_precision Precision for value.
-             * @param {Function=} opt_validator A function that is called to validate
+             * @param {?(string|number)=} opt_min Minimum value.
+             * @param {?(string|number)=} opt_max Maximum value.
+             * @param {?(string|number)=} opt_precision Precision for value.
+             * @param {?Function=} opt_validator A function that is called to validate
              *    changes to the field's value. Takes in a number & returns a validated
              *    number, or null to abort the change.
              * @param {Object=} opt_config A map of options used to configure the field.
@@ -5037,15 +5727,15 @@ declare module Blockly {
              * values. That is, the user's value will rounded to the closest multiple of
              * precision. The least significant digit place is inferred from the precision.
              * Integers values can be enforces by choosing an integer precision.
-             * @param {number|string|undefined} min Minimum value.
-             * @param {number|string|undefined} max Maximum value.
-             * @param {number|string|undefined} precision Precision for value.
+             * @param {?(number|string|undefined)} min Minimum value.
+             * @param {?(number|string|undefined)} max Maximum value.
+             * @param {?(number|string|undefined)} precision Precision for value.
              */
             setConstraints(min: number|string|any /*undefined*/, max: number|string|any /*undefined*/, precision: number|string|any /*undefined*/): void;
     
             /**
              * Sets the minimum value this field can contain. Updates the value to reflect.
-             * @param {number|string|undefined} min Minimum value.
+             * @param {?(number|string|undefined)} min Minimum value.
              */
             setMin(min: number|string|any /*undefined*/): void;
     
@@ -5058,7 +5748,7 @@ declare module Blockly {
     
             /**
              * Sets the maximum value this field can contain. Updates the value to reflect.
-             * @param {number|string|undefined} max Maximum value.
+             * @param {?(number|string|undefined)} max Maximum value.
              */
             setMax(max: number|string|any /*undefined*/): void;
     
@@ -5072,7 +5762,7 @@ declare module Blockly {
             /**
              * Sets the precision of this field's value, i.e. the number to which the
              * value is rounded. Updates the field to reflect.
-             * @param {number|string|undefined} precision The number to which the
+             * @param {?(number|string|undefined)} precision The number to which the
              *    field's value is rounded.
              */
             setPrecision(precision: number|string|any /*undefined*/): void;
@@ -5099,6 +5789,103 @@ declare module Blockly.FieldNumber {
      * @nocollapse
      */
     function fromJson(options: Object): Blockly.FieldNumber;
+}
+
+
+declare module Blockly {
+
+    class FieldParameterFlydown extends FieldParameterFlydown__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FieldParameterFlydown__Class extends Blockly.FieldFlydown__Class  { 
+    
+            /**
+             * Class for a parameter declaration field with flyout menu of getter/setter blocks on mouse over
+             * @param {string} name The initial parameter name in the field.
+             * @param {boolean} isEditable Indicates whether the the name in the flydown is editable.
+             * @param {?string=} displayLocation Location to display the flydown relative to the parameter.
+             * @param {?function=} opt_additionalChangeHandler A one-arg function indicating what to do in addition to
+             *   renaming lexical variables. May be null/undefined to indicate nothing extra to be done.
+             * @param {string=} opt_codeName Syntactic identifier of the field in the source code.
+             * @extends {Blockly.FieldFlydown}
+             * @constructor
+             */
+            constructor(name: string, isEditable: boolean, displayLocation?: string, opt_additionalChangeHandler?: function, opt_codeName?: string);
+    
+            /**
+              * Method for creating blocks
+              * Returns a list of two XML elements: a getter block for name and a setter block for this parameter field.
+              *  @return {!Array.<string>} List of two XML elements.
+              */
+            flydownBlocksXML_(): string[];
+    } 
+    
+}
+
+declare module Blockly.FieldParameterFlydown {
+
+    /**
+     * [lyn, 10/24/13]
+     * Add an option for toggling horizontal vs. vertical placement of parameter lists
+     * on the given block. Put before "Collapse Block in uncollapsed block"
+     * [lyn, 10/27/13] Also remove any "Inline Inputs" option, since vertical params
+     * doesn't interact well with it (in procedures_defreturn).
+     */
+    function addHorizontalVerticalOption(block: any /* jsdoc error */, options: any /* jsdoc error */): void;
+}
+
+
+declare module Blockly.AIProcedure {
+
+    /**
+     * Rename a procedure definition to a new name.
+     *
+     * @this Blockly.FieldProcedureName
+     * @param {!string} newName New name for the procedure represented by the field's source block
+     * @returns {string} The new, validated name of the block
+     */
+    function renameProcedure(newName: string): string;
+}
+
+
+declare module Blockly {
+
+    class FieldProcedureFlydown extends FieldProcedureFlydown__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FieldProcedureFlydown__Class extends Blockly.Field__Class  { 
+    
+            /**
+             * Class for a clickable parameter field.
+             * @param {string} text The initial parameter name in the field.
+             * @extends {Blockly.Field}
+             * @constructor
+             */
+            constructor(name: any /* jsdoc error */, displayLocation: any /* jsdoc error */);
+    
+            /**
+             * Returns a list of two XML elements: a getter block for name and a setter block for this parameter field.
+             *  @return {!Array.<string>} List of two XML elements.
+             **/
+            createBlocks_(): string[];
+    } 
+    
+}
+
+
+declare module Blockly {
+
+    class FieldProcedureName extends FieldProcedureName__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class FieldProcedureName__Class  { 
+    
+            /**
+             * FieldProcedureName is a specialization of {@link Blockly.FieldTextInput} that handles renaming
+             * procedures in the {@link Blockly.ProcedureDatabase} when the procedure's name is changed.
+             * @param {?string} text
+             * @constructor
+             */
+            constructor(text: string);
+    } 
+    
 }
 
 
@@ -5137,6 +5924,7 @@ declare module Blockly.fieldRegistry {
 }
 
 
+
 declare module Blockly {
 
     class FieldTextInput extends FieldTextInput__Class { }
@@ -5147,7 +5935,7 @@ declare module Blockly {
              * Class for an editable text field.
              * @param {string=} opt_value The initial value of the field. Should cast to a
              *    string. Defaults to an empty string if null or undefined.
-             * @param {Function=} opt_validator A function that is called to validate
+             * @param {?Function=} opt_validator A function that is called to validate
              *    changes to the field's value. Takes in a string & returns a validated
              *    string, or null to abort the change.
              * @param {Object=} opt_config A map of options used to configure the field.
@@ -5505,6 +6293,71 @@ declare module Blockly.FieldVariable {
      * @this {Blockly.FieldVariable}
      */
     function dropdownCreate(): any[][];
+}
+
+
+declare module Blockly {
+
+    class Flydown extends Flydown__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class Flydown__Class  { 
+    
+            /**
+             * Class for a flydown.
+             * @constructor
+             */
+            constructor(workspaceOptions: any /* jsdoc error */);
+    
+            /**
+             * Previous CSS class for this flydown
+             * @type {number}
+             * @const
+             */
+            previousCSSClassName_: number;
+    
+            /**
+             * Override flyout factor to be smaller for flydowns
+             * @type {number}
+             * @const
+             */
+            VERTICAL_SEPARATION_FACTOR: number;
+    
+            /**
+             * Creates the flydown's DOM.  Only needs to be called once.  Overrides the flyout createDom method.
+             * @param {!String} cssClassName The name of the CSS class for this flydown.
+             * @return {!Element} The flydown's SVG group.
+             */
+            createDom(cssClassName: String): Element;
+    
+            /**
+             * Set the CSS class of the flydown SVG group. Need to remove previous class if there is one.
+             * @param {!String} newCSSClassName The name of the new CSS class replacing the old one
+             */
+            setCSSClass(newCSSClassName: String): void;
+    
+            /**
+             * Initializes the Flydown.
+             * @param {!Blockly.Workspace} workspace The workspace in which to create new
+             *     blocks.
+             */
+            init(workspace: Blockly.Workspace): void;
+    
+            /**
+             * Show and populate the flydown.
+             * @param {!Array|string} xmlList List of blocks to show.
+             * @param {!num} x x-position of upper-left corner of flydown
+             * @param {!num} y y-position of upper-left corner of flydown
+             */
+            showAt(xmlList: any[]|string, x: num, y: num): void;
+    
+            /**
+             * Compute width and height of Flydown.  Position button under each block.
+             * Overrides the reflow method of flyout
+             * For RTL: Lay out the blocks right-aligned.
+             */
+            reflow(): void;
+    } 
+    
 }
 
 
@@ -6540,7 +7393,6 @@ declare module Blockly {
              * Get the size of the icon as used for rendering.
              * This differs from the actual size of the icon, because it bulges slightly
              * out of its row rather than increasing the height of its row.
-             * TODO (#2562): Remove getCorrectedSize.
              * @return {!Blockly.utils.Size} Height and width.
              */
             getCorrectedSize(): Blockly.utils.Size;
@@ -6952,6 +7804,101 @@ declare module Blockly.Options {
      * @return {Node} DOM tree of blocks, or null.
      */
     function parseToolboxTree(tree: Node|string): Node;
+}
+
+
+declare module Blockly {
+
+    class ProcedureDatabase extends ProcedureDatabase__Class { }
+    /** Fake class which should be extended to avoid inheriting static properties */
+    class ProcedureDatabase__Class  { 
+    
+            /**
+             * ProcedureDatabase provides a per-workspace data store for manipulating procedure definitions in
+             * the Blocks editor.
+             *
+             * @param workspace The workspace containing procedures indexed by the ProcedureDatabase.
+             * @constructor
+             */
+            constructor(workspace: any /*missing*/);
+    
+            /**
+             * Number of procedures in the database.
+             * @type {number}
+             */
+            length: number;
+    
+            /**
+             * Number of procedure definitions in the database that return a value.
+             * @type {number}
+             */
+            returnProcedures: number;
+    
+            /**
+             * Number of procedure definitions in the database that do not return a value.
+             * @type {number}
+             */
+            voidProcedures: number;
+    
+            /**
+             * Get a list of names for procedures in the database.
+             *
+             * @param {Boolean=false} returnValue Return names of procedures with return values (true) or without return values (false)
+             * @returns {!string[]}
+             */
+            getNames(returnValue: any /*missing*/): void;
+    
+            /**
+             * Get a list of (name, id) tuples for showing procedure names in a dropdown field.
+             *
+             * @returns {!Array.<Array.<string>>}
+             */
+            getMenuItems(returnValue: any /* jsdoc error */): string[][];
+    
+            /**
+             * Get a list of procedure definition blocks.
+             *
+             * @param {Boolean=false} returnValue Return procedure definition blocks with return values (true) or without return values (false)
+             * @returns {!Blockly.Block[]}
+             */
+            getDeclarationBlocks(returnValue: any /*missing*/): void;
+    
+            /**
+             * Add a procedure to the database.
+             *
+             * @param {!string} name
+             * @param {!Blockly.Block} block
+             * @returns {boolean} true if the definition was added, otherwise false.
+             */
+            addProcedure(name: string, block: Blockly.Block): boolean;
+    
+            /**
+             * Remove a procedure from the database.
+             *
+             * @param {!string} id
+             */
+            removeProcedure(id: string): void;
+    
+            /**
+             * Rename a procedure in the database with the given oldNmae to newName.
+             *
+             * @param {!string} procId
+             * @param {!string} oldName
+             * @param {!string} newName
+             * @returns {boolean} true if the procedure was renamed in the database, otherwise false.
+             */
+            renameProcedure(procId: string, oldName: string, newName: string): boolean;
+    
+            /**
+             * Get the procedure identified by {@link #id}. If the id does not identify a procedure, undefined
+             * will be returned.
+             *
+             * @param {?string} id The procedure's id.
+             * @returns {?Blockly.BlockSvg} The procedure block defining the procedure identified by {@link #id}
+             */
+            getProcedure(id: string): Blockly.BlockSvg;
+    } 
+    
 }
 
 
@@ -8309,6 +9256,7 @@ declare module Blockly.utils {
      */
     function screenToWsCoordinates(ws: Blockly.WorkspaceSvg, screenCoordinates: Blockly.utils.Coordinate): Blockly.utils.Coordinate;
 }
+
 
 
 declare module Blockly.Events {
@@ -10769,6 +11717,32 @@ declare module Blockly {
              * @package
              */
             getGrid(): Blockly.Grid;
+    
+            /**
+             * Get Flydown
+             * @returns {*}
+             * @package
+             */
+            getFlydown(): any;
+    
+            /**
+             * Obtain the {@link Blockly.ComponentDatabase} associated with the workspace.
+             *
+             * @returns {!Blockly.ComponentDatabase}
+             */
+            getComponentDatabase(): Blockly.ComponentDatabase;
+    
+            /**
+             * Obtain the {@link Blockly.ProcedureDatabase} associated with the workspace.
+             * @returns {!Blockly.ProcedureDatabase}
+             */
+            getProcedureDatabase(): Blockly.ProcedureDatabase;
+    
+            /**
+             * Get the topmost workspace in the workspace hierarchy.
+             * @returns {Blockly.WorkspaceSvg}
+             */
+            getTopWorkspace(): Blockly.WorkspaceSvg;
     } 
     
 }
@@ -13307,8 +14281,11 @@ declare module Blockly.tree {
              */
             constructor(content: string, config: Blockly.tree.BaseNode.Config);
     
-            /** @protected {Blockly.tree.TreeControl} */
-            tree: any /*missing*/;
+            /**
+             * @type {Blockly.tree.TreeControl}
+             * @protected
+             */
+            tree: Blockly.tree.TreeControl;
     
             /**
              * Adds roles and states.
@@ -13861,6 +14838,12 @@ declare module Blockly.blockRendering {
              * @package
              */
             constructor();
+    
+            /**
+             * The minimum height of a dummy input row.
+             * @type {number}
+             */
+            DUMMY_INPUT_MIN_HEIGHT: number;
     
             /**
              * Rounded corner radius.
@@ -14481,7 +15464,6 @@ declare module Blockly.blockRendering {
             /**
              * Figure out where the right edge of the block and right edge of statement inputs
              * should be placed.
-             * TODO: More cleanup.
              * @protected
              */
             computeBounds_(): void;
@@ -15170,7 +16152,6 @@ declare module Blockly.blockRendering {
     
             /**
              * Get the last input on this row, if it has one.
-             * TODO: Consider moving this to InputRow, if possible.
              * @return {Blockly.blockRendering.InputConnection} The last input on the row,
              *     or null.
              * @package
@@ -16898,4 +17879,2914 @@ declare module Blockly.Msg {
 
     /** @type {string} */
     var COLLAPSED_WARNINGS_WARNING: string;
+
+    /** @type {string} */
+    var HIDE: string;
+
+    /** @type {string} */
+    var SHOW: string;
+
+    /** @type {string} */
+    var HORIZONTAL_PARAMETERS: string;
+
+    /** @type {string} */
+    var VERTICAL_PARAMETERS: string;
+
+    /** @type {string} */
+    var CONFIRM_DELETE: string;
+
+    /** @type {string} */
+    var EXPORT_IMAGE: string;
+
+    /** @type {string} */
+    var ARRANGE_H: string;
+
+    /** @type {string} */
+    var ARRANGE_V: string;
+
+    /** @type {string} */
+    var ARRANGE_S: string;
+
+    /** @type {string} */
+    var SORT_W: string;
+
+    /** @type {string} */
+    var SORT_H: string;
+
+    /** @type {string} */
+    var SORT_C: string;
+
+    /** @type {string} */
+    var COPY_TO_BACKPACK: string;
+
+    /** @type {string} */
+    var COPY_ALLBLOCKS: string;
+
+    /** @type {string} */
+    var REMOVE_FROM_BACKPACK: string;
+
+    /** @type {string} */
+    var BACKPACK_GET: string;
+
+    /** @type {string} */
+    var BACKPACK_EMPTY: string;
+
+    /** @type {string} */
+    var BACKPACK_CONFIRM_EMPTY: string;
+
+    /** @type {string} */
+    var BACKPACK_DOC_TITLE: string;
+
+    /** @type {string} */
+    var SHOW_BACKPACK_DOCUMENTATION: string;
+
+    /** @type {string} */
+    var BACKPACK_DOCUMENTATION: string;
+
+    /** @type {string} */
+    var ENABLE_GRID: string;
+
+    /** @type {string} */
+    var DISABLE_GRID: string;
+
+    /** @type {string} */
+    var ENABLE_SNAPPING: string;
+
+    /** @type {string} */
+    var DISABLE_SNAPPING: string;
+
+    /** @type {string} */
+    var DISABLE_ALL_BLOCKS: string;
+
+    /** @type {string} */
+    var ENABLE_ALL_BLOCKS: string;
+
+    /** @type {string} */
+    var HIDE_ALL_COMMENTS: string;
+
+    /** @type {string} */
+    var SHOW_ALL_COMMENTS: string;
+
+    /** @type {string} */
+    var GENERICIZE_BLOCK: string;
+
+    /** @type {string} */
+    var UNGENERICIZE_BLOCK: string;
+
+    /** @type {string} */
+    var DOWNLOAD_BLOCKS_AS_PNG: string;
+
+    /** @type {string} */
+    var VARIABLE_CATEGORY: string;
+
+    /** @type {string} */
+    var PROCEDURE_CATEGORY: string;
+
+    /** @type {string} */
+    var ERROR_SELECT_VALID_ITEM_FROM_DROPDOWN: string;
+
+    /** @type {string} */
+    var ERROR_DUPLICATE_EVENT_HANDLER: string;
+
+    /** @type {string} */
+    var ERROR_COMPONENT_DOES_NOT_EXIST: string;
+
+    /** @type {string} */
+    var ERROR_BLOCK_IS_NOT_DEFINED: string;
+
+    /** @type {string} */
+    var ERROR_BREAK_ONLY_IN_LOOP: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_PICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_PICKER_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_BLACK: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_WHITE: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_RED: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_PINK: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_ORANGE: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_YELLOW: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_GREEN: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_CYAN: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_BLUE: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_MAGENTA: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_LIGHT_GRAY: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_DARK_GRAY: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_GRAY: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_SPLIT_COLOUR: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_SPLIT_COLOUR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_SPLIT_COLOUR_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_MAKE_COLOUR: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_MAKE_COLOUR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COLOUR_MAKE_COLOUR_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_TOOLTIP_1: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_TOOLTIP_2: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_TOOLTIP_3: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_TOOLTIP_4: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_MSG_IF: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_MSG_ELSEIF: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_MSG_ELSE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_MSG_THEN: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_IF_TITLE_IF: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_IF_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_ELSEIF_TITLE_ELSEIF: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_ELSEIF_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_ELSE_TITLE_ELSE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_IF_ELSE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_TITLE_REPEAT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_INPUT_DO: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_OPERATOR_WHILE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_OPERATOR_UNTIL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_TOOLTIP_WHILE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_TOOLTIP_UNTIL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILEUNTIL_TOOLTIP_1: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOR_INPUT_WITH: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOR_INPUT_VAR: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOR_INPUT_FROM: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOR_INPUT_TO: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOR_INPUT_DO: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOR_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_ITEM: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_VAR: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_START: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_END: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_STEP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_DO: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_COLLAPSED_PREFIX: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_INPUT_COLLAPSED_SUFFIX: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FORRANGE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_INPUT_ITEM: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_INPUT_VAR: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_INPUT_INLIST: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_INPUT_DO: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_INPUT_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_INPUT_COLLAPSED_PREFIX: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_INPUT_COLLAPSED_SUFFIX: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FOREACH_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FLOW_STATEMENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FLOW_STATEMENTS_INPUT_OFLOOP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FLOW_STATEMENTS_OPERATOR_BREAK: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FLOW_STATEMENTS_OPERATOR_CONTINUE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FLOW_STATEMENTS_TOOLTIP_BREAK: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FLOW_STATEMENTS_TOOLTIP_CONTINUE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_FLOW_STATEMENTS_WARNING: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILE_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILE_INPUT_TEST: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILE_INPUT_DO: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILE_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_WHILE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CHOOSE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CHOOSE_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CHOOSE_INPUT_TEST: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CHOOSE_INPUT_THEN_RETURN: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CHOOSE_INPUT_ELSE_RETURN: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CHOOSE_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CHOOSE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_DO_THEN_RETURN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_DO_THEN_RETURN_INPUT_DO: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_DO_THEN_RETURN_INPUT_RETURN: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_DO_THEN_RETURN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_DO_THEN_RETURN_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_DO_THEN_RETURN_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_EVAL_BUT_IGNORE_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_EVAL_BUT_IGNORE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_EVAL_BUT_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_EVAL_BUT_IGNORE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_INPUT_SCREENNAME: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_WITH_START_VALUE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_WITH_START_VALUE_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_WITH_START_VALUE_INPUT_SCREENNAME: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_WITH_START_VALUE_INPUT_STARTVALUE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_WITH_START_VALUE_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_OPEN_ANOTHER_SCREEN_WITH_START_VALUE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_START_VALUE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_START_VALUE_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_START_VALUE_INPUT_SCREENNAME: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_START_VALUE_INPUT_STARTVALUE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_START_VALUE_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_START_VALUE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_VALUE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_VALUE_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_VALUE_INPUT_RESULT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_VALUE_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_VALUE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_APPLICATION_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_APPLICATION_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_APPLICATION_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_APPLICATION_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_PLAIN_START_TEXT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_PLAIN_START_TEXT_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_PLAIN_START_TEXT_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_GET_PLAIN_START_TEXT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_PLAIN_TEXT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_PLAIN_TEXT_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_PLAIN_TEXT_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_PLAIN_TEXT_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_CLOSE_SCREEN_WITH_PLAIN_TEXT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_BREAK_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_BREAK_TITLE: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_BREAK_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CONTROLS_BREAK_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_CATEGORY_LOGIC: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_HELPURL_EQ: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_HELPURL_NEQ: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_TOOLTIP_EQ: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_TOOLTIP_NEQ: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_TRANSLATED_NAME: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_EQ: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_COMPARE_NEQ: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_OPERATION_HELPURL_AND: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_OPERATION_HELPURL_OR: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_OPERATION_AND: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_OPERATION_OR: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_OPERATION_TOOLTIP_AND: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_OPERATION_TOOLTIP_OR: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_NEGATE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_NEGATE_INPUT_NOT: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_NEGATE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_BOOLEAN_TRUE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_BOOLEAN_FALSE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_BOOLEAN_TRUE: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_BOOLEAN_FALSE: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_BOOLEAN_TOOLTIP_TRUE: string;
+
+    /** @type {string} */
+    var LANG_LOGIC_BOOLEAN_TOOLTIP_FALSE: string;
+
+    /** @type {string} */
+    var LANG_CATEGORY_MATH: string;
+
+    /** @type {string} */
+    var LANG_MATH_NUMBER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_NUMBER_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_MUTATOR_ITEM_INPUT_NUMBER: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_HELPURL_EQ: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_HELPURL_NEQ: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_HELPURL_LT: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_HELPURL_LTE: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_HELPURL_GT: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_HELPURL_GTE: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_TOOLTIP_EQ: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_TOOLTIP_NEQ: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_TOOLTIP_LT: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_TOOLTIP_LTE: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_TOOLTIP_GT: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_TOOLTIP_GTE: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_EQ: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_NEQ: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_LT: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_LTE: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_GT: string;
+
+    /** @type {string} */
+    var LANG_MATH_COMPARE_GTE: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_HELPURL_ADD: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_HELPURL_MINUS: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_HELPURL_MULTIPLY: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_HELPURL_DIVIDE: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_HELPURL_POWER: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_HELPURL_AND: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_HELPURL_IOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_HELPURL_XOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_TOOLTIP_ADD: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_TOOLTIP_MINUS: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_TOOLTIP_MULTIPLY: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_TOOLTIP_DIVIDE: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_TOOLTIP_POWER: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_TOOLTIP_AND: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_TOOLTIP_IOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_TOOLTIP_XOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_ADD: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_MINUS: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_MULTIPLY: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_DIVIDE: string;
+
+    /** @type {string} */
+    var LANG_MATH_ARITHMETIC_POWER: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_AND: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_IOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_BITWISE_XOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_OP_ROOT: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_OP_ABSOLUTE: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_OP_NEG: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_OP_LN: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_OP_EXP: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_TOOLTIP_ROOT: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_HELPURL_ROOT: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_TOOLTIP_ABS: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_HELPURL_ABS: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_TOOLTIP_NEG: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_HELPURL_NEG: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_TOOLTIP_LN: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_HELPURL_LN: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_TOOLTIP_EXP: string;
+
+    /** @type {string} */
+    var LANG_MATH_SINGLE_HELPURL_EXP: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_TOOLTIP_ROUND: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_HELPURL_ROUND: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_TOOLTIP_CEILING: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_HELPURL_CEILING: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_TOOLTIP_FLOOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_HELPURL_FLOOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_OPERATOR_ROUND: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_OPERATOR_CEILING: string;
+
+    /** @type {string} */
+    var LANG_MATH_ROUND_OPERATOR_FLOOR: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_SIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_COS: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TAN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_ASIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_ACOS: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_ATAN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_ATAN2: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_ATAN2_X: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_ATAN2_Y: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TOOLTIP_SIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_HELPURL_SIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TOOLTIP_COS: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_HELPURL_COS: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TOOLTIP_TAN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_HELPURL_TAN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TOOLTIP_ASIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_HELPURL_ASIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TOOLTIP_ACOS: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_HELPURL_ACOS: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TOOLTIP_ATAN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_HELPURL_ATAN: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_TOOLTIP_ATAN2: string;
+
+    /** @type {string} */
+    var LANG_MATH_TRIG_HELPURL_ATAN2: string;
+
+    /** @type {string} */
+    var LANG_MATH_ONLIST_OPERATOR_MIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_ONLIST_OPERATOR_MAX: string;
+
+    /** @type {string} */
+    var LANG_MATH_ONLIST_TOOLTIP_MIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_ONLIST_TOOLTIP_MAX: string;
+
+    /** @type {string} */
+    var LANG_MATH_ONLIST_HELPURL_MIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_ONLIST_HELPURL_MAX: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_OPERATOR_MODULO: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_OPERATOR_REMAINDER: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_OPERATOR_QUOTIENT: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_TOOLTIP_MODULO: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_HELPURL_MODULO: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_TOOLTIP_REMAINDER: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_HELPURL_REMAINDER: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_TOOLTIP_QUOTIENT: string;
+
+    /** @type {string} */
+    var LANG_MATH_DIVIDE_HELPURL_QUOTIENT: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_INT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_INT_TITLE_RANDOM: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_INT_INPUT_FROM: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_INT_INPUT_TO: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_INT_INPUT: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_INT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_FLOAT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_FLOAT_TITLE_RANDOM: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_FLOAT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_SEED_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_SEED_TITLE_RANDOM: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_SEED_INPUT_TO: string;
+
+    /** @type {string} */
+    var LANG_MATH_RANDOM_SEED_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_ANGLES_TITLE_CONVERT: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_ANGLES_OP_RAD_TO_DEG: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_ANGLES_OP_DEG_TO_RAD: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_ANGLES_TOOLTIP_RAD_TO_DEG: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_ANGLES_HELPURL_RAD_TO_DEG: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_ANGLES_TOOLTIP_DEG_TO_RAD: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_ANGLES_HELPURL_DEG_TO_RAD: string;
+
+    /** @type {string} */
+    var LANG_MATH_FORMAT_AS_DECIMAL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_FORMAT_AS_DECIMAL_TITLE: string;
+
+    /** @type {string} */
+    var LANG_MATH_FORMAT_AS_DECIMAL_INPUT_NUM: string;
+
+    /** @type {string} */
+    var LANG_MATH_FORMAT_AS_DECIMAL_INPUT_PLACES: string;
+
+    /** @type {string} */
+    var LANG_MATH_FORMAT_AS_DECIMAL_INPUT: string;
+
+    /** @type {string} */
+    var LANG_MATH_FORMAT_AS_DECIMAL_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_NUMBER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_NUMBER_INPUT_NUM: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_NUMBER_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_DECIMAL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_DECIMAL_INPUT_NUM: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_DECIMAL_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_HEXADECIMAL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_HEXADECIMAL_INPUT_NUM: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_HEXADECIMAL_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_BINARY_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_BINARY_INPUT_NUM: string;
+
+    /** @type {string} */
+    var LANG_MATH_IS_A_BINARY_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_TITLE_CONVERT: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_OP_DEC_TO_HEX: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_HELPURL_DEC_TO_HEX: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_TOOLTIP_DEC_TO_HEX: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_OP_HEX_TO_DEC: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_HELPURL_HEX_TO_DEC: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_TOOLTIP_HEX_TO_DEC: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_OP_DEC_TO_BIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_HELPURL_DEC_TO_BIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_TOOLTIP_DEC_TO_BIN: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_OP_BIN_TO_DEC: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_HELPURL_BIN_TO_DEC: string;
+
+    /** @type {string} */
+    var LANG_MATH_CONVERT_NUMBER_TOOLTIP_BIN_TO_DEC: string;
+
+    /** @type {string} */
+    var LANG_CATEGORY_TEXT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_LEFT_QUOTE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_RIGHT_QUOTE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_JOIN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_JOIN_TITLE_CREATEWITH: string;
+
+    /** @type {string} */
+    var LANG_TEXT_JOIN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_JOIN_TITLE_JOIN: string;
+
+    /** @type {string} */
+    var LANG_TEXT_JOIN_ITEM_TITLE_ITEM: string;
+
+    /** @type {string} */
+    var LANG_TEXT_JOIN_ITEM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_APPEND_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_APPEND_TO: string;
+
+    /** @type {string} */
+    var LANG_TEXT_APPEND_APPENDTEXT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_APPEND_VARIABLE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_APPEND_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_LENGTH_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_LENGTH_INPUT_LENGTH: string;
+
+    /** @type {string} */
+    var LANG_TEXT_LENGTH_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_ISEMPTY_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_ISEMPTY_INPUT_ISEMPTY: string;
+
+    /** @type {string} */
+    var LANG_TEXT_ISEMPTY_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_LT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_EQUAL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_NEQ: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_GT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_INPUT_COMPARE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_TOOLTIP_LT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_TOOLTIP_EQUAL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_TOOLTIP_NEQ: string;
+
+    /** @type {string} */
+    var LANG_TEXT_COMPARE_TOOLTIP_GT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_OBFUSCATE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_OBFUSCATE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_OBFUSCATE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CHANGECASE_OPERATOR_UPPERCASE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CHANGECASE_OPERATOR_DOWNCASE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CHANGECASE_TOOLTIP_UPPERCASE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CHANGECASE_HELPURL_UPPERCASE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CHANGECASE_TOOLTIP_DOWNCASE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CHANGECASE_HELPURL_DOWNCASE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TRIM_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TRIM_TITLE_TRIM: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TRIM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_STARTS_AT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_STARTS_AT_INPUT_STARTS_AT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_STARTS_AT_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_STARTS_AT_INPUT_PIECE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_STARTS_AT_INPUT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_STARTS_AT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CONTAINS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CONTAINS_INPUT_CONTAINS: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CONTAINS_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CONTAINS_INPUT_PIECE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CONTAINS_INPUT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_CONTAINS_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_INPUT_AT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_INPUT_AT_LIST: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_OPERATOR_SPLIT_AT_FIRST: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_OPERATOR_SPLIT_AT_FIRST_OF_ANY: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_OPERATOR_SPLIT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_OPERATOR_SPLIT_AT_ANY: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_TOOLTIP_SPLIT_AT_FIRST: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_HELPURL_SPLIT_AT_FIRST: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_TOOLTIP_SPLIT_AT_FIRST_OF_ANY: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_HELPURL_SPLIT_AT_FIRST_OF_ANY: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_TOOLTIP_SPLIT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_HELPURL_SPLIT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_TOOLTIP_SPLIT_AT_ANY: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_HELPURL_SPLIT_AT_ANY: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_AT_SPACES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_AT_SPACES_TITLE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SPLIT_AT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SEGMENT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SEGMENT_TITLE_SEGMENT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SEGMENT_INPUT_START: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SEGMENT_INPUT_LENGTH: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SEGMENT_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SEGMENT_INPUT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_SEGMENT_AT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_REPLACE_ALL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_REPLACE_ALL_INPUT_SEGMENT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_REPLACE_ALL_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_REPLACE_ALL_TITLE_REPLACE_ALL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_REPLACE_ALL_INPUT_REPLACEMENT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_REPLACE_ALL_INPUT: string;
+
+    /** @type {string} */
+    var LANG_TEXT_REPLACE_ALL_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_IS_STRING_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_IS_STRING_TITLE: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_IS_STRING_INPUT_THING: string;
+
+    /** @type {string} */
+    var LANG_TEXT_TEXT_IS_STRING_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_CATEGORY_LISTS: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_EMPTY_TITLE: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_WITH_EMPTY_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_WITH_TITLE_MAKE_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_WITH_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_WITH_CONTAINER_TITLE_ADD: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_WITH_CONTAINER_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_WITH_ITEM_TITLE: string;
+
+    /** @type {string} */
+    var LANG_LISTS_CREATE_WITH_ITEM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEM_TITLE: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEM_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_SELECT_ITEM_TITLE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_SELECT_ITEM_TITLE_SELECT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_SELECT_ITEM_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_SELECT_ITEM_INPUT_INDEX: string;
+
+    /** @type {string} */
+    var LANG_LISTS_SELECT_ITEM_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_SELECT_ITEM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_IN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_IN_TITLE_IS_IN: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_IN_INPUT_THING: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_IN_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_IN_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_IN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_POSITION_IN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_POSITION_IN_TITLE_POSITION: string;
+
+    /** @type {string} */
+    var LANG_LISTS_POSITION_IN_INPUT_THING: string;
+
+    /** @type {string} */
+    var LANG_LISTS_POSITION_IN_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_POSITION_IN_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_POSITION_IN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_PICK_RANDOM_ITEM_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_PICK_RANDOM_TITLE_PICK_RANDOM: string;
+
+    /** @type {string} */
+    var LANG_LISTS_PICK_RANDOM_ITEM_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_PICK_RANDOM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REPLACE_ITEM_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REPLACE_ITEM_TITLE_REPLACE: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REPLACE_ITEM_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REPLACE_ITEM_INPUT_INDEX: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REPLACE_ITEM_INPUT_REPLACEMENT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REPLACE_ITEM_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REPLACE_ITEM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REMOVE_ITEM_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REMOVE_ITEM_TITLE_REMOVE: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REMOVE_ITEM_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REMOVE_ITEM_INPUT_INDEX: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REMOVE_ITEM_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REMOVE_ITEM_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LENGTH_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LENGTH_INPUT_LENGTH: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LENGTH_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LENGTH_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LENGTH_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_APPEND_LIST_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_APPEND_LIST_TITLE_APPEND: string;
+
+    /** @type {string} */
+    var LANG_LISTS_APPEND_LIST_INPUT_LIST1: string;
+
+    /** @type {string} */
+    var LANG_LISTS_APPEND_LIST_INPUT_LIST2: string;
+
+    /** @type {string} */
+    var LANG_LISTS_APPEND_LIST_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_APPEND_LIST_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_TITLE_ADD: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_INPUT_ITEM: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_CONTAINER_TITLE_ADD: string;
+
+    /** @type {string} */
+    var LANG_LISTS_ADD_ITEMS_CONTAINER_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_COPY_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_COPY_TITLE_COPY: string;
+
+    /** @type {string} */
+    var LANG_LISTS_COPY_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_COPY_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_LIST_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_LIST_TITLE_IS_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_LIST_INPUT_THING: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_LIST_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REVERSE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REVERSE_TITLE_REVERSE: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REVERSE_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_REVERSE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_ROW_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_ROW_TITLE_TO_CSV: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_ROW_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_ROW_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_ROW_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_ROW_TITLE_FROM_CSV: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_ROW_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_ROW_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_TABLE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_TABLE_TITLE_TO_CSV: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_TABLE_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TO_CSV_TABLE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_TABLE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_TABLE_TITLE_FROM_CSV: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_TABLE_INPUT_TEXT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_FROM_CSV_TABLE_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INSERT_ITEM_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INSERT_TITLE_INSERT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INSERT_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INSERT_INPUT_INDEX: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INSERT_INPUT_ITEM: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INSERT_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INSERT_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_EMPTY_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_TITLE_IS_EMPTY: string;
+
+    /** @type {string} */
+    var LANG_LISTS_INPUT_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_IS_EMPTY_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LOOKUP_IN_PAIRS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LOOKUP_IN_PAIRS_TITLE_LOOKUP_IN_PAIRS: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LOOKUP_IN_PAIRS_INPUT_KEY: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LOOKUP_IN_PAIRS_INPUT_PAIRS: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LOOKUP_IN_PAIRS_INPUT_NOT_FOUND: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LOOKUP_IN_PAIRS_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_LOOKUP_IN_PAIRS_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_LISTS_JOIN_WITH_SEPARATOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_LISTS_JOIN_WITH_SEPARATOR_TITLE: string;
+
+    /** @type {string} */
+    var LANG_LISTS_JOIN_WITH_SEPARATOR_SEPARATOR: string;
+
+    /** @type {string} */
+    var LANG_LISTS_JOIN_WITH_SEPARATOR_LIST: string;
+
+    /** @type {string} */
+    var LANG_LISTS_JOIN_WITH_SEPARATOR_INPUT: string;
+
+    /** @type {string} */
+    var LANG_LISTS_JOIN_WITH_SEPARATOR_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GLOBAL_DECLARATION_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GLOBAL_DECLARATION_TITLE_INIT: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GLOBAL_DECLARATION_NAME: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GLOBAL_DECLARATION_TO: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GLOBAL_DECLARATION_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GLOBAL_DECLARATION_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GLOBAL_PREFIX: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GET_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GET_TITLE_GET: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GET_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_GET_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_SET_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_SET_TITLE_SET: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_SET_TITLE_TO: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_SET_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_SET_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_VARIABLE: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_TITLE_INIT: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_DEFAULT_NAME: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_INPUT_TO: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_IN_DO: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_TRANSLATED_NAME: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_EXPRESSION_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_EXPRESSION_IN_RETURN: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_EXPRESSION_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_EXPRESSION_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_DECLARATION_EXPRESSION_TRANSLATED_NAME: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_MUTATOR_CONTAINER_TITLE_LOCAL_NAMES: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_MUTATOR_CONTAINER_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_MUTATOR_ARG_TITLE_NAME: string;
+
+    /** @type {string} */
+    var LANG_VARIABLES_LOCAL_MUTATOR_ARG_DEFAULT_VARIABLE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFNORETURN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFNORETURN_DEFINE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFNORETURN_PROCEDURE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFNORETURN_DO: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFNORETURN_COLLAPSED_PREFIX: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFNORETURN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DOTHENRETURN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DOTHENRETURN_THEN_RETURN: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DOTHENRETURN_DO: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DOTHENRETURN_RETURN: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DOTHENRETURN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DOTHENRETURN_COLLAPSED_TEXT: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFRETURN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFRETURN_DEFINE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFRETURN_PROCEDURE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFRETURN_DO: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFRETURN_RETURN: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFRETURN_COLLAPSED_PREFIX: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEFRETURN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_DEF_DUPLICATE_WARNING: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_GET_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLNORETURN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLNORETURN_CALL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLNORETURN_PROCEDURE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLNORETURN_COLLAPSED_PREFIX: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLNORETURN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLNORETURN_TRANSLATED_NAME: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLRETURN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLRETURN_CALL: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLRETURN_PROCEDURE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLRETURN_COLLAPSED_PREFIX: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLRETURN_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_CALLRETURN_TRANSLATED_NAME: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_MUTATORCONTAINER_TITLE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_MUTATORARG_TITLE: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_HIGHLIGHT_DEF: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_MUTATORCONTAINER_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_PROCEDURES_MUTATORARG_TOOLTIP: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TITLE_WHEN: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TITLE_DO: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_EVENT_TITLE: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_METHOD_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_METHOD_TITLE_CALL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_METHOD_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_METHOD_TITLE_CALL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_METHOD_TITLE_FOR_COMPONENT: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GETTER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_GETTER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_GETTER_TITLE_OF_COMPONENT: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SETTER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SETTER_TITLE_SET: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SETTER_TITLE_TO: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_SETTER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_SETTER_TITLE_SET: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_SETTER_TITLE_TO: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GENERIC_SETTER_TITLE_OF_COMPONENT: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BUTTON_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BUTTON_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BUTTON_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CHECKBOX_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CHECKBOX_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CHECKBOX_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CLOCK_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CLOCK_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CLOCK_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CLOCK_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGE_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGE_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGE_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LABEL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LABEL_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LABEL_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LABEL_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LISTPICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LISTPICKER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LISTPICKER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LISTPICKER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SWITCH_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TIMEPICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_DATEPICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LISTVIEW_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NOTIFIER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NOTIFIER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NOTIFIER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NOTIFIER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PASSWORDTEXTBOX_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PASSWORDTEXTBOX_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PASSWORDTEXTBOX_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PASSWORDTEXTBOX_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SCREEN_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SCREEN_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SCREEN_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SCREEN_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SLIDER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SLIDER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SLIDER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SLIDER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SPINNER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTBOX_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTBOX_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTBOX_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTBOX_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEBVIEWER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEBVIEWER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEBVIEWER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEBVIEWER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_HORIZARRANGE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_HORIZARRANGE_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_HORIZSCROLLARRANGE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VERTARRANGE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VERTARRANGE_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VERTSCROLLARRANGE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TABLEARRANGE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TABLEARRANGE_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMCORDER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMCORDER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMCORDER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMCORDER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMERA_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMERA_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMERA_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CAMERA_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGEPICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGEPICKER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGEPICKER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGEPICKER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PLAYER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PLAYER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PLAYER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PLAYER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUND_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUND_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUND_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUND_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUNDRECORDER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUNDRECORDER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUNDRECORDER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SOUNDRECORDER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SPEECHRECOGNIZER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SPEECHRECOGNIZER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SPEECHRECOGNIZER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SPEECHRECOGNIZER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTTOSPEECH_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTTOSPEECH_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTTOSPEECH_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTTOSPEECH_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VIDEOPLAYER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VIDEOPLAYER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VIDEOPLAYER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VIDEOPLAYER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BALL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BALL_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BALL_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BALL_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CANVAS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CANVAS_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CANVAS_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CANVAS_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGESPRITE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGESPRITE_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGESPRITE_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_IMAGESPRITE_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_MAPS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_MAPS_CIRCLE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_MAPS_FEATURECOLLECTION_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_MAPS_LINESTRING_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_MAPS_MARKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_MAPS_POLYGON_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_MAPS_RECTANGLE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACCELEROMETERSENSOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACCELEROMETERSENSOR_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACCELEROMETERSENSOR_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACCELEROMETERSENSOR_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BARCODESCANNER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BARCODESCANNER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BARCODESCANNER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BARCODESCANNER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GYROSCOPESENSOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GYROSCOPESENSOR_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GYROSCOPESENSOR_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GYROSCOPESENSOR_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LOCATIONSENSOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LOCATIONSENSOR_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LOCATIONSENSOR_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_LOCATIONSENSOR_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NEARFIELDSENSOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PEDOMETERSENSOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PROXIMITYSENSOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ORIENTATIONSENSOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ORIENTATIONSENSOR_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ORIENTATIONSENSOR_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ORIENTATIONSENSOR_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CONTACTPICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CONTACTPICKER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CONTACTPICKER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CONTACTPICKER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_EMAILPICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_EMAILPICKER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_EMAILPICKER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_EMAILPICKER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONECALL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONECALL_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONECALL_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONECALL_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONENUMBERPICKER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONENUMBERPICKER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONENUMBERPICKER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_PHONENUMBERPICKER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTING_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTING_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTING_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TEXTING_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_SHARING_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TWITTER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TWITTER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TWITTER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TWITTER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FUSIONTABLESCONTROL_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FUSIONTABLESCONTROL_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FUSIONTABLESCONTROL_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FUSIONTABLESCONTROL_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FILE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYDB_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYDB_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYDB_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYDB_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYWEBDB_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYWEBDB_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYWEBDB_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_TINYWEBDB_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_CLOUDDB_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACTIVITYSTARTER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACTIVITYSTARTER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACTIVITYSTARTER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_ACTIVITYSTARTER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHCLIENT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHCLIENT_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHCLIENT_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHCLIENT_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHSERVER_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHSERVER_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHSERVER_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_BLUETOOTHSERVER_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEB_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEB_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEB_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_WEB_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTDIRECT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTDIRECT_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTDIRECT_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTCOLOR_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTCOLOR_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTCOLOR_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTCOLOR_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTLIGHT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTLIGHT_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTLIGHT_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTLIGHT_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTSOUND_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTSOUND_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTSOUND_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTSOUND_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTTOUCH_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTTOUCH_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTTOUCH_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTTOUCH_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTULTRASONIC_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTULTRASONIC_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTULTRASONIC_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTULTRASONIC_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTDRIVE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTDRIVE_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_NXTDRIVE_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FIREBASE_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FIREBASE_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FIREBASE_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_FIREBASE_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GAMECLIENT_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GAMECLIENT_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GAMECLIENT_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_GAMECLIENT_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VOTING_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VOTING_PROPERTIES_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VOTING_EVENTS_HELPURL: string;
+
+    /** @type {string} */
+    var LANG_COMPONENT_BLOCK_VOTING_METHODS_HELPURL: string;
+
+    /** @type {string} */
+    var HIDE_WARNINGS: string;
+
+    /** @type {string} */
+    var MISSING_SOCKETS_WARNINGS: string;
+
+    /** @type {string} */
+    var WRONG_TYPE_BLOCK_WARINGS: string;
+
+    /** @type {string} */
+    var REPL_NETWORK_CONNECTION_ERROR: string;
+
+    /** @type {string} */
+    var REPL_NETWORK_ERROR: string;
+
+    /** @type {string} */
+    var REPL_NETWORK_ERROR_RESTART: string;
+
+    /** @type {string} */
+    var REPL_OK: string;
+
+    /** @type {string} */
+    var REPL_COMPANION_VERSION_CHECK: string;
+
+    /** @type {string} */
+    var REPL_COMPANION_OUT_OF_DATE: string;
+
+    /** @type {string} */
+    var REPL_COMPANION_OUT_OF_DATE2: string;
+
+    /** @type {string} */
+    var REPL_EMULATORS: string;
+
+    /** @type {string} */
+    var REPL_DEVICES: string;
+
+    /** @type {string} */
+    var REPL_APPROVE_UPDATE: string;
+
+    /** @type {string} */
+    var REPL_NOT_NOW: string;
+
+    /** @type {string} */
+    var REPL_COMPANION_OUT_OF_DATE_IMMEDIATE: string;
+
+    /** @type {string} */
+    var REPL_COMPANION_WRONG_PACKAGE: string;
+
+    /** @type {string} */
+    var REPL_DISMISS: string;
+
+    /** @type {string} */
+    var REPL_SOFTWARE_UPDATE: string;
+
+    /** @type {string} */
+    var REPL_OK_LOWER: string;
+
+    /** @type {string} */
+    var REPL_GOT_IT: string;
+
+    /** @type {string} */
+    var REPL_UPDATE_INFO: string;
+
+    /** @type {string} */
+    var REPL_UPDATE_NO_CONNECTION: string;
+
+    /** @type {string} */
+    var REPL_UNABLE_TO_UPDATE: string;
+
+    /** @type {string} */
+    var REPL_UNABLE_TO_LOAD: string;
+
+    /** @type {string} */
+    var REPL_UNABLE_TO_LOAD_NO_RESPOND: string;
+
+    /** @type {string} */
+    var REPL_NOW_DOWNLOADING: string;
+
+    /** @type {string} */
+    var REPL_RUNTIME_ERROR: string;
+
+    /** @type {string} */
+    var REPL_NO_ERROR_FIVE_SECONDS: string;
+
+    /** @type {string} */
+    var REPL_CONNECTING_USB_CABLE: string;
+
+    /** @type {string} */
+    var REPL_STARTING_EMULATOR: string;
+
+    /** @type {string} */
+    var REPL_CONNECTING: string;
+
+    /** @type {string} */
+    var REPL_CANCEL: string;
+
+    /** @type {string} */
+    var REPL_GIVE_UP: string;
+
+    /** @type {string} */
+    var REPL_KEEP_TRYING: string;
+
+    /** @type {string} */
+    var REPL_NO_START_EMULATOR: string;
+
+    /** @type {string} */
+    var REPL_PLUGGED_IN_Q: string;
+
+    /** @type {string} */
+    var REPL_AI_NO_SEE_DEVICE: string;
+
+    /** @type {string} */
+    var REPL_HELPER_Q: string;
+
+    /** @type {string} */
+    var REPL_HELPER_NOT_RUNNING: string;
+
+    /** @type {string} */
+    var REPL_USB_CONNECTED_WAIT: string;
+
+    /** @type {string} */
+    var REPL_SECONDS_ENSURE_RUNNING: string;
+
+    /** @type {string} */
+    var REPL_EMULATOR_STARTED: string;
+
+    /** @type {string} */
+    var REPL_STARTING_COMPANION_ON_PHONE: string;
+
+    /** @type {string} */
+    var REPL_STARTING_COMPANION_IN_EMULATOR: string;
+
+    /** @type {string} */
+    var REPL_COMPANION_STARTED_WAITING: string;
+
+    /** @type {string} */
+    var REPL_VERIFYING_COMPANION: string;
+
+    /** @type {string} */
+    var REPL_CONNECT_TO_COMPANION: string;
+
+    /** @type {string} */
+    var REPL_YOUR_CODE_IS: string;
+
+    /** @type {string} */
+    var REPL_DO_YOU_REALLY_Q: string;
+
+    /** @type {string} */
+    var REPL_FACTORY_RESET: string;
+
+    /** @type {string} */
+    var REPL_WEBRTC_CONNECTION_ERROR: string;
+
+    /** @type {string} */
+    var REPL_EMULATOR_ONLY: string;
+
+    /** @type {string} */
+    var DO_IT: string;
+
+    /** @type {string} */
+    var DO_IT_DISCONNECTED: string;
+
+    /** @type {string} */
+    var CLEAR_DO_IT_ERROR: string;
+
+    /** @type {string} */
+    var CAN_NOT_DO_IT: string;
+
+    /** @type {string} */
+    var CONNECT_TO_DO_IT: string;
+
+    /** @type {string} */
+    var TIME_MONTHS: string;
+
+    /** @type {string} */
+    var TIME_WEEKS: string;
+
+    /** @type {string} */
+    var TIME_DAYS: string;
+
+    /** @type {string} */
+    var TIME_HOURS: string;
+
+    /** @type {string} */
+    var TIME_MINUTES: string;
+
+    /** @type {string} */
+    var TIME_SECONDS: string;
+
+    /** @type {string} */
+    var TIME_DURATION: string;
+
+    /** @type {string} */
+    var DIALOG_SECURE_ESTABLISHING: string;
+
+    /** @type {string} */
+    var DIALOG_SECURE_ESTABLISHED: string;
+
+    /** @type {string} */
+    var DIALOG_FOUND_COMPANION: string;
+
+    /** @type {string} */
+    var DIALOG_SUBMIT: string;
+
+    /** @type {string} */
+    var DIALOG_ENTER_VALUES: string;
 }
