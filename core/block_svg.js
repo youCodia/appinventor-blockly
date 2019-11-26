@@ -1937,7 +1937,7 @@ Blockly.BlockSvg.prototype.setErrorIconText = function(text) {
  */
 Blockly.BlockSvg.prototype.addBadBlock = function() {
   if (this.rendered) {
-    Blockly.utils.addClass(/** @type {!Element} */ (this.svgGroup_),
+    Blockly.utils.dom.addClass(/** @type {!Element} */ (this.svgGroup_),
       'badBlock');
     // Move the selected block to the top of the stack.
     this.svgGroup_.parentNode.appendChild(this.svgGroup_);
@@ -2107,7 +2107,7 @@ Blockly.BlockSvg.prototype.getTopWorkspace = function() {
  * Add the selection highlight to the block.
  */
 Blockly.BlockSvg.prototype.addSelect = function() {
-  Blockly.utils.addClass(this.svgGroup_, 'blocklySelected');
+  Blockly.utils.dom.addClass(this.svgGroup_, 'blocklySelected');
   var block_0 = this;
   do {
     var root = block_0.getSvgRoot();
