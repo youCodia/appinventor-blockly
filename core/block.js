@@ -1935,8 +1935,8 @@ Blockly.Block.prototype.toDevString = function() {
 
 
 Blockly.Block.mutationToDom = function() {
-  var container = details.mutationToDomFunc ? details.mutationToDomFunc()
-    : document.createElement('mutation');
+  var container = details.mutationToDomFunc ? details.mutationToDomFunc() :
+    document.createElement('mutation');
   container.setAttribute('is_statement', this['isStatement'] || false);
   return container;
 };
@@ -2009,8 +2009,8 @@ Blockly.Block.prototype.interpolateMsg = function(msg, var_args) {
         fields.push([tuple[0], tuple[1]]);
       } else {
         input = this.appendValueInput(tuple[0])
-          .setCheck(tuple[1])
-          .setAlign(tuple[2]);
+            .setCheck(tuple[1])
+            .setAlign(tuple[2]);
       }
       arguments[number] = null;  // Inputs may not be reused.
     } else if (symbol == '\n' && fields.length) {
@@ -2026,7 +2026,7 @@ Blockly.Block.prototype.interpolateMsg = function(msg, var_args) {
   // If any fields remain, create a trailing dummy input.
   if (fields.length) {
     var input = this.appendDummyInput()
-      .setAlign(dummyAlign);
+        .setAlign(dummyAlign);
     fields.forEach(addFieldToInput, input);
   }
 

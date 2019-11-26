@@ -59,6 +59,12 @@ goog.require('Blockly.VariablesDynamic');
 // "zoom"/"controls" configuration must be false.
 goog.require('Blockly.ZoomControls');
 
+goog.require('Blockly.TranslationProperties');
+goog.require('Blockly.TranslationEvents');
+goog.require('Blockly.TranslationMethods');
+goog.require('Blockly.TranslationParams');
+goog.require('Blockly.ComponentTypes');
+goog.require('Blockly.ComponentInstances');
 goog.require('Blockly.ComponentDatabase');
 goog.require('Blockly.ProcedureDatabase');
 goog.require('Blockly.VariableDatabase');

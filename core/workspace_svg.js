@@ -116,6 +116,13 @@ Blockly.WorkspaceSvg = function(options,
    */
   this.markerSvg_ = null;
 
+  /**
+   * The workspace's component database.
+   * @type {Blockly.ComponentDatabase}
+   * @private
+   */
+  this.componentDb_ = null;
+
   if (Blockly.Variables && Blockly.Variables.flyoutCategory) {
     this.registerToolboxCategoryCallback(Blockly.VARIABLE_CATEGORY_NAME,
         Blockly.Variables.flyoutCategory);
@@ -2579,6 +2586,70 @@ Blockly.WorkspaceSvg.prototype.getProcedureDatabase = function() {
 };
 
 /**
+ * Add a new component to the workspace.
+ *
+ * @param {string} uid
+ * @param {string} instanceName
+ * @param {string} typeName
+ * @returns {Blockly.WorkspaceSvg} The workspace for call chaining.
+ */
+Blockly.WorkspaceSvg.prototype.addComponent = function(uid, instanceName, typeName) {
+  this.componentDb_.addInstance(uid, instanceName, typeName)
+  return this;
+};
+
+/**
+ * Remove a component from the workspace.
+ *
+ * @param {string} uid The component's unique identifier
+ * @returns {Blockly.WorkspaceSvg} The workspace for call chaining.
+ */
+Blockly.WorkspaceSvg.prototype.removeComponent = function(uid) {
+  var component = this.componentDb_.getInstance(uid);
+
+  // Fixes #1175
+  if (this.drawer_ && component.name === this.drawer_.lastComponent) {
+    this.drawer_.hide();
+  }
+
+  if (!this.componentDb_.removeInstance(uid)) {
+    return this;
+  }
+  var blocks = this.getAllBlocks();
+  for (var i = 0, block; block = blocks[i]; ++i) {
+    if (block.category == 'Component'
+      && block.getFieldValue('COMPONENT_SELECTOR') == component.name) {
+      block.dispose(true);
+    }
+  }
+  Blockly.hideChaff();
+  return this;
+};
+
+/**
+ * Rename a component in the workspace.
+ *
+ * @param {!string} uid The unique identifier of the component.
+ * @param {!string} oldName The previous name of the component.
+ * @param {!string} newName The new name of the component.
+ * @returns {Blockly.WorkspaceSvg} The workspace for call chaining.
+ */
+Blockly.WorkspaceSvg.prototype.renameComponent = function(uid, oldName, newName) {
+  if (!this.componentDb_.renameInstance(uid, oldName, newName)) {
+    console.log('Renaming: No such component instance ' + oldName + '; aborting.');
+    return this;
+  }
+  var blocks = this.getAllBlocks();
+  for (var i = 0, block; block = blocks[i]; ++i) {
+    if (block.category == 'Component' && block.rename(oldName, newName)) {
+      this.blocksNeedingRendering.push(block);
+    }
+  }
+  Blockly.hideChaff();
+  return this;
+};
+
+/**
  * Get the topmost workspace in the workspace hierarchy.
  * @returns {Blockly.WorkspaceSvg}
  */
@@ -2588,4 +2659,17 @@ Blockly.WorkspaceSvg.prototype.getTopWorkspace = function() {
     parent = parent.targetWorkspace;
   }
   return parent;
+};
+
+/**
+ * Populate the component type database with the components encoded by
+ * strComponentInfos.
+ *
+ * @param {string} strComponentInfos String containing JSON-encoded
+ * @param {Object.<string, string>} translations Translation dictionary provided by GWT
+ * component information.
+ */
+Blockly.WorkspaceSvg.prototype.populateComponentTypes = function(strComponentInfos, translations) {
+  this.componentDb_.populateTypes(JSON.parse(strComponentInfos));
+  this.componentDb_.populateTranslations(translations);
 };

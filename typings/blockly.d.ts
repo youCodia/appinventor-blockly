@@ -1484,6 +1484,13 @@ declare module Blockly {
             tab(start: Blockly.Field|Blockly.Block, forward: boolean): void;
     
             /**
+             * Obtains starting coordinates so the block can return to spot after copy.
+             *
+             * @param {!Event} e Mouse down event.
+             */
+            onMouseDown_(e: Event): void;
+    
+            /**
              * Generate the context menu for this block.
              * @protected
              * @return {Array.<!Object>} Context menu options
@@ -1535,13 +1542,9 @@ declare module Blockly {
             getSvgRoot(): SVGElement;
     
             /**
-             * Dispose of this block.
-             * @param {boolean=} healStack If true, then try to heal any gap by connecting
-             *     the next statement with the previous statement.  Otherwise, dispose of
-             *     all children of this block.
-             * @param {boolean=} animate If true, show a disposal animation and sound.
+             * Extend Blockly.BlockSvg.prototype.dispose with AI2-specific functionality.
              */
-            dispose(healStack?: boolean, animate?: boolean): void;
+            dispose: any /*missing*/;
     
             /**
              * Change the colour of a block.
@@ -1613,7 +1616,7 @@ declare module Blockly {
             setHighlighted(highlighted: boolean): void;
     
             /**
-             * Select this block.  Highlight it visually.
+             * Add the selection highlight to the block.
              */
             addSelect(): void;
     
@@ -1789,6 +1792,57 @@ declare module Blockly {
              * @package
              */
             highlightForReplacement(add: boolean): void;
+    
+            /**
+             * Block's error icon (if any).
+             * @type {Blockly.Error}
+             */
+            error: Blockly.Error;
+    
+            /**
+             * Flag to indicate a bad block.
+             * @type {boolean}
+             */
+            isBad: boolean;
+    
+            /**
+             * Set this block's warning text.
+             * @param {?string} text The text, or null to delete.
+             */
+            setErrorIconText(text: string): void;
+    
+            /**
+             * Mark this block as bad.  Highlight it visually in red.
+             */
+            addBadBlock(): void;
+    
+            /**
+             * Unmark this block as bad.
+             */
+            removeBadBlock(): void;
+    
+            /**
+             * Check to see if the block is marked as bad.
+             */
+            isBadBlock(): void;
+    
+            /**
+             * Mark this block as Bad.  Highlight it visually in Red.
+             */
+            badBlock(): void;
+    
+            /**
+             * Unmark this block as Bad.
+             */
+            notBadBlock(): void;
+    
+            /**
+             * Set this block's error text.
+             * @param {?string} text The text, or null to delete.
+             * @param {string=} opt_id An optional ID for the warning text to be able to
+             *     maintain multiple errors.
+             */
+            setErrorText(text: string, opt_id?: string): void;
     
             /**
              * Get the top-most workspace. Typically this is the current workspace except for flyout/flydowns.
@@ -2290,6 +2344,144 @@ declare module Blockly {
             dispose(): void;
     } 
     
+}
+
+
+declare module Blockly.Component {
+
+    /**
+     * Rename component with given uid and instance name oldname to newname
+     * @param oldname the Component's current name, e.g., Button1
+     * @param newname the newname the component will be given, e.g., Button2
+     * @param uid the component's unique id
+     *
+     * Here are the various places that a component's name must be changed, using Button1
+     *  as an example name.
+     * Blockly.ComponentInstances -- an index containing an entry for each Component used by the app
+     *  keyed on its oldname, needs to change to the new name
+     *  e.g., ComponentInstances['Button1'] --> ComponentInstances['Button2']
+     *
+     * Call rename on all component blocks
+     */
+    function rename(oldname: any /*missing*/, newname: any /*missing*/, uid: any /*missing*/): void;
+
+    /**
+     * Remove component with given type and instance name and unique id uid
+     * @param type, Component's type -- e.g., Button
+     * @param name, Component's name == e.g., Buton1
+     * @param uid, Component's unique id -- not currently used
+     *
+     * The component should be listed in the ComponentInstances list.
+     *   - For each instance of the component's block in the Blockly.mainWorkspace
+     *     -- Call its BlocklyBlock.destroy() method to remove the block
+     *        from the workspace and adjust enclosed or enclosing blocks.
+     * Remove the block's entry from ComponentInstances
+     *
+     */
+    function remove(type: any /*missing*/, name: any /*missing*/, uid: any /*missing*/): void;
+
+    /**
+     * Builds a map of component name -> top level blocks for that component.
+     * A special entry for "globals" maps to top-level global definitions.
+     *
+     * @param warnings a Map that will be filled with warnings for troublesome blocks
+     * @param errors a list that will be filled with error messages
+     * @param forRepl whether this is executed for REPL
+     * @param compileUnattachedBlocks whether to compile unattached blocks
+     * @returns object mapping component names to the top-level blocks for that component in the
+     *            workspace. For each component C the object contains a field "component.C" whose
+     *            value is an array of blocks. In addition, the object contains a field named "globals"
+     *            whose value is an array of all valid top-level blocks not associated with a
+     *            component (procedure and variable definitions)
+     */
+    function buildComponentMap(warnings: any /*missing*/, errors: any /*missing*/, forRepl: any /*missing*/, compileUnattachedBlocks: any /*missing*/): void;
+
+    /**
+     * Verify all blocks after a Component upgrade
+     */
+    function verifyAllBlocks(): void;
+}
+
+declare module Blockly.ComponentTypes {
+
+    /**
+     * Blockly.ComponentTypes
+     *
+     * Object whose fields are names of component types. For a given component type object, the "componentInfo"
+     * field is the parsed JSON type object for the component type and the "blocks" field is an array
+     * of block names for the generic blocks for that type.
+     * For example:
+     *    Blockly.ComponentTypes['Canvas'].componentInfo = the JSON object from parsing the typeJsonString
+     *
+     * eventDictionary, methodDictionary, and properties take in the name of the event/method/property
+     * and give the relevant object in from the componentInfo object.
+     *
+     * The componentInfo has the following format (where upper-case strings are
+     * non-terminals and lower-case strings are literals):
+     * { "type": "COMPONENT-TYPE",
+     *   "name": "COMPONENT-TYPE-NAME",
+     *   "external": "true"|"false",
+     *   "version": "VERSION",
+     *   "categoryString": "PALETTE-CATEGORY",
+     *   "helpString": "DESCRIPTION",
+     *   "showOnPalette": "true"|"false",
+     *   "nonVisible": "true"|"false",
+     *   "iconName": "ICON-FILE-NAME",
+     *   "properties": [
+     *     { "name": "PROPERTY-NAME",
+     *        "editorType": "EDITOR-TYPE",
+     *        "defaultValue": "DEFAULT-VALUE"},*
+     *    ],
+     *   "blockProperties": [
+     *     { "name": "PROPERTY-NAME",
+     *        "description": "DESCRIPTION",
+     *        "type": "YAIL-TYPE",
+     *        "rw": "read-only"|"read-write"|"write-only"|"invisible"},*
+     *   ],
+     *   "events": [
+     *     { "name": "EVENT-NAME",
+     *       "description": "DESCRIPTION",
+     *       "params": [
+     *         { "name": "PARAM-NAME",
+     *           "type": "YAIL-TYPE"},*
+     *       ]},+
+     *   ],
+     *   "methods": [
+     *     { "name": "METHOD-NAME",
+     *       "description": "DESCRIPTION",
+     *       "params": [
+     *         { "name": "PARAM-NAME",
+     *       "type": "YAIL-TYPE"},*
+     *     ]},+
+     *   ]
+     * }
+     */
+    function haveType(typeName: any /* jsdoc error */): void;
+
+    /**
+     * Populate Blockly.ComponentTypes object
+     *
+     * @param projectId the projectid whose types we are loading. Note: projectId is
+     *        a string at this point. We will convert it to a long in Java code we call
+     *        later.
+     */
+    function populateTypes(projectId: any /*missing*/): void;
+}
+
+declare module Blockly.ComponentInstances {
+
+    /**
+     * Blockly.ComponentInstances
+     *
+     * Object whose fields are names of component instances and whose field values
+     * are objects with a blocks field containing an array of block names for the
+     * instance.
+     * For example:
+     *    Blockly.ComponentInstances['Canvas1'].blocks = ['Canvas1_Touched',
+     *        'Canvas1_DrawCircle', 'Canvas1_getproperty', 'Canvas1_setproperty', ...]
+     * Blockly.ComponentInstances is populated by the Blockly.Component.add method.
+     */
+    function addInstance(name: any /* jsdoc error */, uid: any /* jsdoc error */, typeName: any /* jsdoc error */): void;
 }
 
 
@@ -8960,6 +9152,180 @@ declare module Blockly.TouchGesture {
 }
 
 
+declare module Blockly.TranslationEvents {
+
+    /**
+     * eventList is an array list of event with format [eventValue, eventName, eventDescription]
+     */
+    function addEvents(eventList: any /* jsdoc error */): void;
+
+    /**
+     * eventList is an array list of event with format [eventValue, eventName]
+     */
+    function updateEvents(eventList: any /* jsdoc error */): void;
+
+    /**
+     * Update event map
+     *
+     * { "key": "EVENT-NAME",
+     *   "value": "EVENT-VALUE",
+     *   "decription": "EVENT-DESCRIPTION",
+     * }
+     *
+     */
+    function updateEventMap(typeDescription: any /* jsdoc error */): void;
+
+    /**
+     * Update event map
+     *
+     * typeJsonString has the following format (where upper-case strings are
+     * non-terminals and lower-case strings are literals):
+     * [
+     *    { "key": "EVENT-NAME",
+     *      "value": "EVENT-VALUE",
+     *      "decription": "EVENT-DESCRIPTION",
+     *    },+
+     * ]
+     */
+    function updateMap(jsonString: any /* jsdoc error */): void;
+}
+
+
+declare module Blockly.TranslationMethods {
+
+    /**
+     * methodList is an array list of method with format [methodValue, methodName, methodDescription]
+     */
+    function addMethods(methodList: any /* jsdoc error */): void;
+
+    /**
+     * methodList is an array list of method with format [methodValue, methodName]
+     */
+    function updateMethods(methodList: any /* jsdoc error */): void;
+
+    /**
+     * Update method map
+     *
+     * { "key": "METHOD-NAME",
+     *   "value": "METHOD-VALUE",
+     *   "decription": "METHOD-DESCRIPTION",
+     * }
+     *
+     */
+    function updateMethodMap(typeDescription: any /* jsdoc error */): void;
+
+    /**
+     * Update method map
+     *
+     * typeJsonString has the following format (where upper-case strings are
+     * non-terminals and lower-case strings are literals):
+     * [
+     *    { "key": "METHOD-NAME",
+     *      "value": "METHOD-VALUE",
+     *      "decription": "METHOD-DESCRIPTION",
+     *    },+
+     * ]
+     */
+    function updateMap(jsonString: any /* jsdoc error */): void;
+}
+
+
+declare module Blockly.TranslationParams {
+
+    /**
+     * paramList is an array list of param with format [paramValue, paramName]
+     */
+    function addParams(paramList: any /* jsdoc error */): void;
+
+    /**
+     * paramList is an array list of param with format [paramValue, paramName]
+     */
+    function updateParams(paramList: any /* jsdoc error */): void;
+
+    /**
+     * Update parameter map 
+     *
+     * { "key": "PARAM-NAME",
+     *   "value": "PARAM-VALUE",
+     * }
+     *
+     */
+    function updateParamMap(typeDescription: any /* jsdoc error */): void;
+
+    /**
+     * Update param map 
+     *
+     * typeJsonString has the following format (where upper-case strings are
+     * non-terminals and lower-case strings are literals):
+     * [
+     *    { "key": "PARAM-NAME",
+     *      "value": "PARAM-VALUE",
+     *    },+
+     * ]
+     */
+    function updateMap(jsonString: any /* jsdoc error */): void;
+}
+
+
+declare module Blockly.TranslationProperties {
+
+    /**
+     * propertyList is an array list of property with format [propertyValue, propertyName, rw]
+     */
+    function addProperties(typeName: any /* jsdoc error */, propertyList: any /* jsdoc error */): void;
+
+    /**
+     * propertyList is an array list of property with format [propertyValue, propertyName, rw]
+     */
+    function updateProperties(typeName: any /* jsdoc error */, propertyList: any /* jsdoc error */): void;
+
+    /**
+     * Return all properties (getter + setter methods)
+     */
+    function getAllProperties(typeName: any /* jsdoc error */): void;
+
+    /**
+     * Return properties of setter method
+     */
+    function getAllPropertiesSetter(typeName: any /* jsdoc error */): void;
+
+    /**
+     * Return properties of getter method
+     */
+    function getAllPropertiesGetter(typeName: any /* jsdoc error */): void;
+
+    /**
+     * Update property map for a component of the given type
+    
+     * { "name": "COMPONENT-TYPE-NAME",
+     *   "blockProperties": [
+     *     {  "key": "PROPERTY-NAME",
+     *        "value": "PROPERTY-VALUE",
+     *        "rw": "read-only"|"read-write"|"write-only"|"invisible"},*
+     *   ]
+     * }
+     */
+    function updateComponentMap(typeDescription: any /* jsdoc error */): void;
+
+    /**
+     * Update property map
+     *
+     * typeJsonString has the following format (where upper-case strings are
+     * non-terminals and lower-case strings are literals):
+     * [
+     *   { "name": "COMPONENT-TYPE-NAME",
+     *      "blockProperties": [
+     *      {  "key": "PROPERTY-NAME",
+     *         "value": "PROPERTY-VALUE",
+     *         "rw": "read-only"|"read-write"|"write-only"|"invisible"},*
+     *      ]
+     *  },+
+     * ]
+     */
+    function updateMap(jsonString: any /* jsdoc error */): void;
+}
+
+
 declare module Blockly {
 
     class Trashcan extends Trashcan__Class { }
@@ -11739,10 +12105,48 @@ declare module Blockly {
             getProcedureDatabase(): Blockly.ProcedureDatabase;
     
             /**
+             * Add a new component to the workspace.
+             *
+             * @param {string} uid
+             * @param {string} instanceName
+             * @param {string} typeName
+             * @returns {Blockly.WorkspaceSvg} The workspace for call chaining.
+             */
+            addComponent(uid: string, instanceName: string, typeName: string): Blockly.WorkspaceSvg;
+    
+            /**
+             * Remove a component from the workspace.
+             *
+             * @param {string} uid The component's unique identifier
+             * @returns {Blockly.WorkspaceSvg} The workspace for call chaining.
+             */
+            removeComponent(uid: string): Blockly.WorkspaceSvg;
+    
+            /**
+             * Rename a component in the workspace.
+             *
+             * @param {!string} uid The unique identifier of the component.
+             * @param {!string} oldName The previous name of the component.
+             * @param {!string} newName The new name of the component.
+             * @returns {Blockly.WorkspaceSvg} The workspace for call chaining.
+             */
+            renameComponent(uid: string, oldName: string, newName: string): Blockly.WorkspaceSvg;
+    
+            /**
              * Get the topmost workspace in the workspace hierarchy.
              * @returns {Blockly.WorkspaceSvg}
              */
             getTopWorkspace(): Blockly.WorkspaceSvg;
+    
+            /**
+             * Populate the component type database with the components encoded by
+             * strComponentInfos.
+             *
+             * @param {string} strComponentInfos String containing JSON-encoded
+             * @param {Object.<string, string>} translations Translation dictionary provided by GWT
+             * component information.
+             */
+            populateComponentTypes(strComponentInfos: string, translations: { [key: string]: string }): void;
     } 
     
 }
